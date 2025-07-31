@@ -1,6 +1,6 @@
+using Quee.Extensions;
 using Quee.WebApp.Quee.Commands;
 using Quee.WebApp.Quee.Consumers;
-using QueueUtility.QueueSystem.Extensions;
 
 namespace QueueUtility.WebApp
 {
@@ -13,7 +13,7 @@ namespace QueueUtility.WebApp
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.AddQuee(options =>
+            builder.Services.QueeWithAzureServiceBus(options =>
             {
                 options.AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue");
             });

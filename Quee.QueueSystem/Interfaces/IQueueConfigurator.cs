@@ -5,8 +5,6 @@
 /// </summary>
 public interface IQueueConfigurator
 {
-    public IQueueHandlerConfigurator QueueHandler { get; set; }
-
     /// <summary>
     /// Adds a single sender capable of sending messages to the queue for later consumption
     /// </summary>
@@ -23,7 +21,7 @@ public interface IQueueConfigurator
     /// <param name="queueName">Name of the queue</param>
     IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
-        where TConsumer : IConsumer<TMessage>;
+        where TConsumer : class, IConsumer<TMessage>;
 
     /// <summary>
     /// Adds a sender and receiver for the queue under a single name to handle sending messages into the queue 
@@ -34,5 +32,5 @@ public interface IQueueConfigurator
     /// <param name="queueName">Name of the queue</param>
     IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName)
         where TMessage : class
-        where TConsumer : IConsumer<TMessage>;
+        where TConsumer : class, IConsumer<TMessage>;
 }

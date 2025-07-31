@@ -1,19 +1,22 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
 using Quee.Interfaces;
 using System.Text;
 
 namespace Quee.Services.AzureServiceBus;
 
-public class AzureServiceBusHostedService<TMessage, TConsumer>
+public class AzureServiceBusQueueConsumer<TMessage>
     : IHostedService, IDisposable
-    where TConsumer : IConsumer<TMessage>
     where TMessage : class
 {
     private readonly string connectionString;
     private readonly string queueName;
+    private readonly IConsumer<TMessage> consumer;
+
     private readonly ServiceBusClient serviceBusClient;
     private readonly ServiceBusProcessor serviceBusProcessor;
+
     private CancellationTokenSource? cancellationTokenSource;
 
     /// <summary>
@@ -21,11 +24,12 @@ public class AzureServiceBusHostedService<TMessage, TConsumer>
     /// </summary>
     /// <param name="connectionString">Connection string for the Azure Service Bus</param>
     /// <param name="queueName">Queue to work with in the service bus</param>
-    public AzureServiceBusHostedService(string connectionString, string queueName)
+    public AzureServiceBusQueueConsumer(string connectionString, string queueName, IConsumer<TMessage> consumer)
     {
         // Save data
         this.connectionString = connectionString;
         this.queueName = queueName;
+        this.consumer = consumer;
 
         // Build the client for connecting to the service bus
         serviceBusClient = new ServiceBusClient(connectionString);
@@ -41,17 +45,24 @@ public class AzureServiceBusHostedService<TMessage, TConsumer>
         await serviceBusProcessor.StartProcessingAsync(cancellationTokenSource.Token);
     }
 
+    /// <inheritdoc />
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        cancellationTokenSource?.Cancel();
+        await serviceBusProcessor.StopProcessingAsync(cancellationToken);
+    }
+
     /// <summary>
     /// Processes a single message from the queue
     /// </summary>
     /// <param name="args">Message arguments</param>
     private async Task ProcessMessageAsync(ProcessMessageEventArgs args)
     {
-        var body = Encoding.UTF8.GetString(args.Message.Body.ToArray());
-        Console.WriteLine($"Received message: {body}");
+        var message = JsonConvert.DeserializeObject<TMessage>(
+            Encoding.UTF8.GetString(args.Message.Body.ToArray()));
+        Console.WriteLine($"Received message: {message}");
 
         await args.CompleteMessageAsync(args.Message);
-
     }
 
     private Task ProcessErrorAsync(ProcessErrorEventArgs args)
@@ -60,12 +71,7 @@ public class AzureServiceBusHostedService<TMessage, TConsumer>
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc />
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        cancellationTokenSource?.Cancel();
-        await serviceBusProcessor.StopProcessingAsync(cancellationToken);
-    }
+
 
     /// <inheritdoc />
     public void Dispose()
