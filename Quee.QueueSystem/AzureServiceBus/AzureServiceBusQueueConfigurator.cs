@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
 
-namespace Quee.Services.AzureServiceBus;
+namespace Quee.AzureServiceBus;
 
 /// <summary>
 /// Handles setting up the senders and consumers for queuing messages into the Service Bus
@@ -16,10 +17,13 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
+        AddQueueSender<TMessage>(queueName);
+
         services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
         {
             return new AzureServiceBusQueueConsumer<TMessage>(
+                provider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>(),
                 connectionString,
                 queueName,
                 provider.GetRequiredService<IConsumer<TMessage>>());
@@ -36,14 +40,5 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
             return new AzureServiceBusQueueSender<TMessage>(connectionString, queueName);
         });
         return this;
-    }
-
-    /// <inheritdoc />
-    public IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName)
-        where TMessage : class
-        where TConsumer : class, IConsumer<TMessage>
-    {
-        return AddQueueSender<TMessage>(queueName)
-            .AddQueueConsumer<TMessage, TConsumer>(queueName);
     }
 }

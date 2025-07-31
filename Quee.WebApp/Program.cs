@@ -13,7 +13,7 @@ namespace QueueUtility.WebApp
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.QueeWithAzureServiceBus(options =>
+            builder.Services.QueeWithAzureServiceBus(builder.Configuration["ServiceBusConnectionString"]!, options =>
             {
                 options.AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue");
             });

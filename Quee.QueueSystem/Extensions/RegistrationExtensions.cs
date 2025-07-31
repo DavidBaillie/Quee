@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Quee.AzureServiceBus;
 using Quee.Interfaces;
-using Quee.Services.AzureServiceBus;
 
 namespace Quee.Extensions;
 

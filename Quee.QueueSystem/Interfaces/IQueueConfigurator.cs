@@ -22,15 +22,4 @@ public interface IQueueConfigurator
     IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>;
-
-    /// <summary>
-    /// Adds a sender and receiver for the queue under a single name to handle sending messages into the queue 
-    /// as well as consuming them from the queue.
-    /// </summary>
-    /// <typeparam name="TMessage">Message the consumer is responsible processing</typeparam>
-    /// <typeparam name="TConsumer">Class responsible for consuming the messaeg</typeparam>
-    /// <param name="queueName">Name of the queue</param>
-    IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName)
-        where TMessage : class
-        where TConsumer : class, IConsumer<TMessage>;
 }

@@ -32,7 +32,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api/sent-message",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
