@@ -1,0 +1,6 @@
+@QueueUtility.WebApp_HostAddress = http://localhost:5243
+
+GET {{QueueUtility.WebApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
