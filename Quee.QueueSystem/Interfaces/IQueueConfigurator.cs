@@ -22,4 +22,15 @@ public interface IQueueConfigurator
     IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>;
+
+    /// <summary>
+    /// Adds a pair of sender and receiver for the message type <typeparamref name="TMessage"/> to handle sending and receiving messages in this process
+    /// </summary>
+    /// <typeparam name="TMessage">Message to be sent in the queue</typeparam>
+    /// <typeparam name="TConsumer">Consumer implementation to handle messages</typeparam>
+    /// <param name="queueName">Name of the queue to subscribe to</param>
+    /// <param name="retries">Allowed retry time spans between each attempt</param>
+    IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
+        where TMessage : class
+        where TConsumer : class, IConsumer<TMessage>;
 }

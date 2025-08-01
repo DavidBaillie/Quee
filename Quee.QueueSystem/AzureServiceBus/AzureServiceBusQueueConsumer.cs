@@ -145,7 +145,7 @@ public class AzureServiceBusQueueConsumer<TMessage>
         message.RetryExceptions.Add($"{exception.GetType().Name} - {exception.Message}");
 
         // If there's no more retries, we go into fault
-        if (message.RetryDelays is null || message.RetryNumber > message.RetryDelays.Length)
+        if (message.RetryDelays is null || message.RetryNumber >= message.RetryDelays.Length)
         {
             try
             {

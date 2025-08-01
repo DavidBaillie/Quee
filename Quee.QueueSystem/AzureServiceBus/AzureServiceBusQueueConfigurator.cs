@@ -17,7 +17,7 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        AddQueueSender<TMessage>(queueName);
+        //AddQueueSender<TMessage>(queueName);
 
         services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
@@ -39,6 +39,16 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
         {
             return new AzureServiceBusQueueSender<TMessage>(connectionString, queueName, retries);
         });
+        return this;
+    }
+
+    /// <inheritdoc />
+    public IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
+        where TMessage : class
+        where TConsumer : class, IConsumer<TMessage>
+    {
+        AddQueueSender<TMessage>(queueName, retries);
+        AddQueueConsumer<TMessage, TConsumer>(queueName);
         return this;
     }
 }

@@ -8,13 +8,14 @@ public class LogMessageConsumer(ILogger<LogMessageConsumer> logger)
 {
     public Task ConsumeAsync(LogMessageCommand message, CancellationToken cancellationToken)
     {
+        throw new NullReferenceException("Null because I feel like it");
         logger.LogInformation(message.message, cancellationToken);
         return Task.CompletedTask;
     }
 
-    public Task ConsumeFaultAsync(LogMessageCommand message, CancellationToken cancellationToken)
+    public Task ConsumeFaultAsync(IFault<LogMessageCommand> message, CancellationToken cancellationToken)
     {
-        logger.LogInformation($"Failed to log message {message.message} because of an exception.", cancellationToken);
+        logger.LogInformation($"Failed to log message {message.Payload.message} because of an exception.", cancellationToken);
         return Task.CompletedTask;
     }
 }
