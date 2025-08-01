@@ -33,11 +33,11 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueSender<TMessage>(string queueName) where TMessage : class
+    public IQueueConfigurator AddQueueSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
     {
         services.AddScoped<IQueueSender<TMessage>, AzureServiceBusQueueSender<TMessage>>(provider =>
         {
-            return new AzureServiceBusQueueSender<TMessage>(connectionString, queueName);
+            return new AzureServiceBusQueueSender<TMessage>(connectionString, queueName, retries);
         });
         return this;
     }

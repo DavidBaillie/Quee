@@ -16,7 +16,7 @@ public interface IConsumer<T> where T : class
     /// <summary>
     /// Consumes the base message when an exception occurred in the <see cref="ConsumeAsync(T, CancellationToken)"/> method
     /// </summary>
-    /// <param name="message"></param>
+    /// <param name="fault"></param>
     /// <param name="cancellationToken"></param>
-    Task ConsumeFaultAsync(T message, CancellationToken cancellationToken);
+    Task ConsumeFaultAsync(IFault<T> fault, CancellationToken cancellationToken);
 }
