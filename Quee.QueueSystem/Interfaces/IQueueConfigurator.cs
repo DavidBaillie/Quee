@@ -6,6 +6,14 @@
 public interface IQueueConfigurator
 {
     /// <summary>
+    /// Adds the message tracking service into the send/receive system to allow you to monitor 
+    /// all messages sent and received by the local runtime. 
+    /// CAUTION: This will impact performance and should only be added in development or test environments where tracking all messages is important.
+    /// </summary>
+    /// <param name="maximumMessagesPerQueue">The maxmimum number of messages that will be stored for each queue in local memory</param>
+    IQueueConfigurator AddQueueMessageTracker(int maximumMessagesPerQueue = 100_000);
+
+    /// <summary>
     /// Adds a single sender capable of sending messages to the queue for later consumption
     /// </summary>
     /// <typeparam name="TMessage">Message the sender is responsible for transmitting</typeparam>

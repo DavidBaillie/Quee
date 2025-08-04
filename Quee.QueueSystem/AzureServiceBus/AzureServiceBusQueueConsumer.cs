@@ -16,6 +16,7 @@ public class AzureServiceBusQueueConsumer<TMessage>
 
     private readonly ILogger<AzureServiceBusQueueConsumer<TMessage>> logger;
     private readonly IConsumer<TMessage> consumer;
+    private readonly IQueueEventTrackingService? trackingService;
 
     private readonly ServiceBusClient serviceBusClient;
     private readonly ServiceBusProcessor serviceBusProcessor;
@@ -29,15 +30,17 @@ public class AzureServiceBusQueueConsumer<TMessage>
     /// <param name="connectionString">Connection string for the Azure Service Bus</param>
     /// <param name="queueName">Queue to work with in the service bus</param>
     public AzureServiceBusQueueConsumer(
-        ILogger<AzureServiceBusQueueConsumer<TMessage>> logger,
         string connectionString,
         string queueName,
-        IConsumer<TMessage> consumer)
+        ILogger<AzureServiceBusQueueConsumer<TMessage>> logger,
+        IConsumer<TMessage> consumer,
+        IQueueEventTrackingService? trackingService = null)
     {
         this.logger = logger;
         this.connectionString = connectionString;
         this.queueName = queueName;
         this.consumer = consumer;
+        this.trackingService = trackingService;
 
         // Build the client for connecting to the service bus
         serviceBusClient = new ServiceBusClient(connectionString, new ServiceBusClientOptions()
@@ -127,6 +130,7 @@ public class AzureServiceBusQueueConsumer<TMessage>
         }
 
         // No exception encountered, complete the message as being correctly consumed
+        trackingService?.RecordReceivedMessage(queueName, message.Payload);
         await args.CompleteMessageAsync(args.Message);
     }
 
@@ -149,6 +153,9 @@ public class AzureServiceBusQueueConsumer<TMessage>
         {
             try
             {
+                // Save the message before processing the fault to make sure no data is lost
+                trackingService?.RecordFaultedMessage(queueName, message.Payload);
+
                 await consumer.ConsumeFaultAsync(new AzureServiceBusFaultMessage<TMessage>()
                 {
                     Payload = message.Payload,

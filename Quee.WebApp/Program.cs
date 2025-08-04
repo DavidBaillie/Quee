@@ -15,6 +15,7 @@ namespace QueueUtility.WebApp
             builder.Services.AddControllers();
             builder.Services.QueeWithAzureServiceBus(builder.Configuration["ServiceBusConnectionString"]!, options =>
             {
+                options.AddQueueMessageTracker();
                 options.AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue");
                 options.AddQueueProcessors<FailMessageCommand, FailMessageConsumer>("FailMessage-Queue",
                     TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));

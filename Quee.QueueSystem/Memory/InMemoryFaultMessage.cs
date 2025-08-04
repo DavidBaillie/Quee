@@ -1,7 +1,7 @@
 ﻿using Quee.Abstracts;
 
-namespace Quee.AzureServiceBus;
+namespace Quee.Memory;
 
-internal class AzureServiceBusFaultMessage<TMessage>
+internal class InMemoryFaultMessage<TMessage>
     : FaultMessageBase<TMessage>
     where TMessage : class;

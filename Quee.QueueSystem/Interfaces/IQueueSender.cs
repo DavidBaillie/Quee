@@ -11,5 +11,6 @@ public interface IQueueSender<TMessage> where TMessage : class
     /// </summary>
     /// <param name="message">Message to send</param>
     /// <param name="cancellationToken">Process token</param>
-    Task SendMessageAsync(TMessage message, CancellationToken cancellationToken);
+    /// <param name="queueDelay">Delay added before the intial message is sent to the queue</param>
+    Task SendMessageAsync(TMessage message, CancellationToken cancellationToken, TimeSpan? queueDelay = null);
 }

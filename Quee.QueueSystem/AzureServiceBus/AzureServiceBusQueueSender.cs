@@ -17,10 +17,11 @@ public class AzureServiceBusQueueSender<TMessage>
 {
     private readonly string connectionString;
     private readonly string queueName;
-
     private readonly ServiceBusClient serviceBusClient;
     private readonly ServiceBusSender serviceBusSender;
     private readonly TimeSpan[] retrySpans;
+
+    private readonly IQueueEventTrackingService? trackingService;
 
     private bool hasCheckedQueueExists = false;
     private bool queueExists = false;
@@ -34,10 +35,12 @@ public class AzureServiceBusQueueSender<TMessage>
     public AzureServiceBusQueueSender(
         string connectionString,
         string queueName,
+        IQueueEventTrackingService? trackingService = null,
         params TimeSpan[] retrySpans)
     {
         this.connectionString = connectionString;
         this.queueName = queueName;
+        this.trackingService = trackingService;
         this.retrySpans = retrySpans;
 
         serviceBusClient = new ServiceBusClient(connectionString);
@@ -51,7 +54,8 @@ public class AzureServiceBusQueueSender<TMessage>
     /// <param name="cancellationToken">Process token</param>
     public async Task SendMessageAsync(
         TMessage message,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        TimeSpan? initialDelay = null)
     {
         // Check that the queue exists only once
         if (!hasCheckedQueueExists)
@@ -77,6 +81,12 @@ public class AzureServiceBusQueueSender<TMessage>
                 }));
 
         var busMessage = new ServiceBusMessage(body);
+
+        // Allow the user to schedule an initial delay before the message can be consumed in the queue
+        if (initialDelay.HasValue)
+            busMessage.ScheduledEnqueueTime = DateTime.UtcNow + initialDelay.Value;
+
+        trackingService?.RecordSentMessage(queueName, message);
         await serviceBusSender.SendMessageAsync(busMessage, cancellationToken);
     }
 

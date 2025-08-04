@@ -16,9 +16,12 @@ public static class RegistrationExtensions
     /// <param name="connectionString">Connection string to the service bus</param>
     /// <param name="configuration">Options object for configuration</param>
     /// <returns>Cascading reference</returns>
-    public static IServiceCollection QueeWithAzureServiceBus(this IServiceCollection services, string connectionString, Action<IQueueConfigurator>? configuration = null)
+    public static IServiceCollection QueeWithAzureServiceBus(
+        this IServiceCollection services,
+        string connectionString,
+        Action<IAzureServiceBusQueueConfigurator>? configuration = null)
     {
-        IQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString);
+        IAzureServiceBusQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString);
         configuration?.Invoke(configurator);
 
         return services;
