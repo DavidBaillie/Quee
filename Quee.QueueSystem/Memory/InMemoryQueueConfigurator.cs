@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
 using Quee.Services;
@@ -22,6 +23,10 @@ internal class InMemoryQueueConfigurator
     /// <inheritdoc />
     public IQueueConfigurator AddQueueMessageTracker(int maximumMessagesPerQueue = 100000)
     {
+        services.RemoveAll<IQueueMonitor>();
+        services.RemoveAll<IQueueEventTrackingService>();
+
+        services.AddTransient<IQueueMonitor, QueueMonitor>();
         services.AddSingleton<IQueueEventTrackingService>((provider) =>
         {
             return new QueueEventTrackingService(
@@ -36,6 +41,8 @@ internal class InMemoryQueueConfigurator
     public IQueueConfigurator AddQueueSender<TMessage>(string queueName, params TimeSpan[] retries)
         where TMessage : class
     {
+        services.RemoveAll<IQueueSender<TMessage>>();
+
         services.AddTransient<IQueueSender<TMessage>>((provider) =>
         {
             return new InMemoryQueueSender<TMessage>(
@@ -53,6 +60,9 @@ internal class InMemoryQueueConfigurator
         where TConsumer : class, IConsumer<TMessage>
         where TMessage : class
     {
+        services.RemoveAll<IConsumer<TMessage>>();
+        services.RemoveAll<InMemoryQueueConsumer<TMessage>>();
+
         services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService((provider) =>
         {

@@ -1,3 +1,3 @@
 ﻿namespace Quee.WebApp.Quee.Commands;
 
-public record LogMessageCommand(string message);
+public record LogMessageCommand(string Message);

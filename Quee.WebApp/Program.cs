@@ -26,7 +26,7 @@ namespace QueueUtility.WebApp
                 options.AddQueueMessageTracker();
                 options.AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue");
                 options.AddQueueProcessors<FailMessageCommand, FailMessageConsumer>("FailMessage-Queue",
-                    TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+                    TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             });
 
             var app = builder.Build();

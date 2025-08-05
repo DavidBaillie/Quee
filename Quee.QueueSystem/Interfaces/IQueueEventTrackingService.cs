@@ -52,4 +52,14 @@ public interface IQueueEventTrackingService
     /// <param name="searchExpression">Predicate for matching the message on</param>
     /// <returns>True if a message was found, false if no matching message present</returns>
     bool TryGetSentMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression) where T : class;
+
+    /// <summary>
+    /// Tries to find a message of <typeparamref name="T"/> which has faulted 
+    /// </summary>
+    /// <typeparam name="T">Type of message to search for</typeparam>
+    /// <param name="queueName">Name of queue fault happened in</param>
+    /// <param name="value">Found message</param>
+    /// <param name="searchExpression">Search predicate to identify message by</param>
+    /// <returns>True if the message was found, false if no matching message present</returns>
+    bool TryGetFaultedMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression) where T : class;
 }

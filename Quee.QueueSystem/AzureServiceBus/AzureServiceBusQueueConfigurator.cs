@@ -11,14 +11,26 @@ namespace Quee.AzureServiceBus;
 /// </summary>
 /// <param name="services">Service collection to register in</param>
 /// <param name="connectionString">Service Bus Connection String</param>
-internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection services, string connectionString)
+internal sealed class AzureServiceBusQueueConfigurator
     : IAzureServiceBusQueueConfigurator
 {
+    private readonly IServiceCollection services;
+    private readonly string connectionString;
+
+    public AzureServiceBusQueueConfigurator(IServiceCollection services, string connectionString)
+    {
+        this.services = services;
+        this.connectionString = connectionString;
+    }
+
     /// <inheritdoc />
     public IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
+        services.RemoveAll<IConsumer<TMessage>>();
+        services.RemoveAll<AzureServiceBusQueueConsumer<TMessage>>();
+
         services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
         {
@@ -36,6 +48,8 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
     /// <inheritdoc />
     public IQueueConfigurator AddQueueSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
     {
+        services.RemoveAll<IConsumer<TMessage>>();
+
         services.AddScoped<IQueueSender<TMessage>>(provider =>
         {
             return new AzureServiceBusQueueSender<TMessage>(
@@ -60,7 +74,10 @@ internal sealed class AzureServiceBusQueueConfigurator(IServiceCollection servic
     /// <inheritdoc />
     public IQueueConfigurator AddQueueMessageTracker(int maximumMessagesPerQueue = 100_000)
     {
+        services.RemoveAll<IQueueMonitor>();
         services.RemoveAll<IQueueEventTrackingService>();
+
+        services.AddTransient<IQueueMonitor, QueueMonitor>();
         services.AddSingleton<IQueueEventTrackingService>((provider) =>
         {
             return new QueueEventTrackingService(maximumMessagesPerQueue, provider.GetRequiredService<ILogger<QueueEventTrackingService>>());

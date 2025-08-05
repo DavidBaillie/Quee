@@ -135,4 +135,27 @@ internal sealed class QueueEventTrackingService
 
         return false;
     }
+
+    /// <inheritdoc />
+    public bool TryGetFaultedMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression)
+        where T : class
+    {
+        value = null;
+
+        // No queue, no message
+        if (!faultedMessages.ContainsKey(queueName))
+            return false;
+
+        // Check all the elements of the queue against them being of T and matching the desired search expression
+        foreach (var queuedMessage in faultedMessages[queueName])
+        {
+            if (queuedMessage.Message is T resultMessage && searchExpression.Invoke(resultMessage))
+            {
+                value = resultMessage;
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -8,13 +8,13 @@ public class LogMessageConsumer(ILogger<LogMessageConsumer> logger)
 {
     public Task ConsumeAsync(LogMessageCommand message, CancellationToken cancellationToken)
     {
-        logger.LogInformation(message.message, cancellationToken);
+        logger.LogInformation(message.Message, cancellationToken);
         return Task.CompletedTask;
     }
 
     public Task ConsumeFaultAsync(IFault<LogMessageCommand> message, CancellationToken cancellationToken)
     {
-        logger.LogInformation($"Failed to log message {message.Payload.message} because of an exception.", cancellationToken);
+        logger.LogInformation($"Failed to log message {message.Payload.Message} because of an exception.", cancellationToken);
         return Task.CompletedTask;
     }
 }
