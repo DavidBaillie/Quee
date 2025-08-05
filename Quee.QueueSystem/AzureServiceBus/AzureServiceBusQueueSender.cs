@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using Quee.Exceptions;
 using Quee.Interfaces;
+using Quee.QueueOptions;
 using System.Text;
 
 namespace Quee.AzureServiceBus;
@@ -11,7 +12,7 @@ namespace Quee.AzureServiceBus;
 /// Contents of the message are serialized and then sent to the queue for later consumption.
 /// </summary>
 /// <typeparam name="TMessage">Message to be sent into the queue</typeparam>
-public class AzureServiceBusQueueSender<TMessage>
+internal class AzureServiceBusQueueSender<TMessage>
     : IDisposable, IQueueSender<TMessage>
     where TMessage : class
 {
@@ -22,6 +23,7 @@ public class AzureServiceBusQueueSender<TMessage>
     private readonly TimeSpan[] retrySpans;
 
     private readonly IQueueEventTrackingService? trackingService;
+    private readonly QueueRetryOptions retryOptions;
 
     private bool hasCheckedQueueExists = false;
     private bool queueExists = false;
@@ -32,15 +34,17 @@ public class AzureServiceBusQueueSender<TMessage>
     /// <param name="connectionString">Connection string to the Service Bus</param>
     /// <param name="queueName">Name of the queue to submit to</param>
     /// <param name="retrySpans">Timespans between each allowed retry</param>
-    public AzureServiceBusQueueSender(
+    internal AzureServiceBusQueueSender(
         string connectionString,
         string queueName,
+        QueueRetryOptions options,
         IQueueEventTrackingService? trackingService = null,
         params TimeSpan[] retrySpans)
     {
         this.connectionString = connectionString;
         this.queueName = queueName;
         this.trackingService = trackingService;
+        this.retryOptions = options;
         this.retrySpans = retrySpans;
 
         serviceBusClient = new ServiceBusClient(connectionString);
@@ -77,7 +81,7 @@ public class AzureServiceBusQueueSender<TMessage>
                 new AzureServiceBusMessage<TMessage>()
                 {
                     Payload = message,
-                    RetryDelays = retrySpans
+                    RetryDelays = retryOptions.AllowRetries ? retrySpans : []
                 }));
 
         var busMessage = new ServiceBusMessage(body);

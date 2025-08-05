@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
+using Quee.QueueOptions;
 using Quee.Services;
 
 namespace Quee.Memory;
@@ -14,10 +15,24 @@ internal class InMemoryQueueConfigurator
 {
     private readonly IServiceCollection services;
 
+    private bool allowRetries = true;
+
+
     public InMemoryQueueConfigurator(IServiceCollection services)
     {
         this.services = services;
         services.AddSingleton<IMemoryQueue, InMemoryQueue>();
+
+        services.RemoveAll<QueueRetryOptions>();
+        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = true });
+    }
+
+    /// <inheritdoc />
+    public IQueueConfigurator DisableRetryPolicy()
+    {
+        services.RemoveAll<QueueRetryOptions>();
+        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = false });
+        return this;
     }
 
     /// <inheritdoc />
@@ -48,8 +63,9 @@ internal class InMemoryQueueConfigurator
             return new InMemoryQueueSender<TMessage>(
                 queueName,
                 provider.GetRequiredService<IMemoryQueue>(),
+                provider.GetRequiredService<QueueRetryOptions>(),
                 provider.GetService<IQueueEventTrackingService>(),
-                retries);
+                allowRetries ? retries : []); // Optionally disable the retries provided depending on the disable invocation
         });
 
         return this;

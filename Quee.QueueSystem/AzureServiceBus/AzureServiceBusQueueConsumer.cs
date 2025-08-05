@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Quee.AzureServiceBus;
 
-public class AzureServiceBusQueueConsumer<TMessage>
+internal class AzureServiceBusQueueConsumer<TMessage>
     : IHostedService, IDisposable
     where TMessage : class
 {

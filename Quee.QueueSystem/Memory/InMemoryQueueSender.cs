@@ -1,4 +1,5 @@
 ﻿using Quee.Interfaces;
+using Quee.QueueOptions;
 
 namespace Quee.Memory;
 
@@ -12,6 +13,7 @@ internal class InMemoryQueueSender<TMessage>
 {
     private readonly string queueName;
     private readonly IMemoryQueue queue;
+    private readonly QueueRetryOptions retryOptions;
     private readonly IQueueEventTrackingService? trackingService;
     private readonly TimeSpan[] retries;
 
@@ -24,11 +26,13 @@ internal class InMemoryQueueSender<TMessage>
     public InMemoryQueueSender(
         string queueName,
         IMemoryQueue queue,
+        QueueRetryOptions retryOptions,
         IQueueEventTrackingService? trackingService,
         TimeSpan[] retries)
     {
         this.queueName = queueName;
         this.queue = queue;
+        this.retryOptions = retryOptions;
         this.trackingService = trackingService;
         this.retries = retries;
     }
@@ -40,7 +44,7 @@ internal class InMemoryQueueSender<TMessage>
         queue.WriteMessage(queueName, new InMemoryMessage<TMessage>()
         {
             Payload = message,
-            RetryDelays = retries,
+            RetryDelays = retryOptions.AllowRetries ? retries : [],
             RetryNumber = 0
         });
 

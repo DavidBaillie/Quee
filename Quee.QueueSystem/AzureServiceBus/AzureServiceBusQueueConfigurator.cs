@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
+using Quee.QueueOptions;
 using Quee.Services;
 
 namespace Quee.AzureServiceBus;
@@ -21,6 +22,9 @@ internal sealed class AzureServiceBusQueueConfigurator
     {
         this.services = services;
         this.connectionString = connectionString;
+
+        services.RemoveAll<QueueRetryOptions>();
+        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = true });
     }
 
     /// <inheritdoc />
@@ -55,6 +59,7 @@ internal sealed class AzureServiceBusQueueConfigurator
             return new AzureServiceBusQueueSender<TMessage>(
                 connectionString,
                 queueName,
+                provider.GetRequiredService<QueueRetryOptions>(),
                 provider.GetService<IQueueEventTrackingService>(),
                 retries);
         });
@@ -82,6 +87,14 @@ internal sealed class AzureServiceBusQueueConfigurator
         {
             return new QueueEventTrackingService(maximumMessagesPerQueue, provider.GetRequiredService<ILogger<QueueEventTrackingService>>());
         });
+        return this;
+    }
+
+    public IQueueConfigurator DisableRetryPolicy()
+    {
+        services.RemoveAll<QueueRetryOptions>();
+        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = false });
+
         return this;
     }
 }

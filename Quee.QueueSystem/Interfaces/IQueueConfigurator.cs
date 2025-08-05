@@ -41,4 +41,10 @@ public interface IQueueConfigurator
     IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>;
+
+    /// <summary>
+    /// When called, structures the queue to disable all provided retry time spans. Useful for when you'd like the test the system and don't 
+    /// want to wait for your predefined retries to run. Always runs the first consumption attempt and goes straight into fault if it fails.
+    /// </summary>
+    IQueueConfigurator DisableRetryPolicy();
 }
