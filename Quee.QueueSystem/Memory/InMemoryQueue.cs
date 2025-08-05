@@ -8,14 +8,14 @@ namespace Quee.Memory;
 /// Represents the queue itself for the in-memory provider to allow for messages to be received and sent to consumers 
 /// on the local machine only. 
 /// </summary>
-internal sealed class InMemoryQueue(IServiceProvider serviceProvider)
+internal sealed class InMemoryQueue(IServiceProvider serviceProvider) : IMemoryQueue
 {
     private readonly object Lock = new();
 
     /// <summary>
     /// Store of all queued messages in the system
     /// </summary>
-    private readonly Dictionary<string, Queue<object>> queuedMessages = new();
+    private readonly Dictionary<string, PriorityQueue<object, DateTime>> queuedMessages = new();
 
     /// <summary>
     /// Optional tracking service responsible for keeping record of all messages sent/received in the system.
@@ -28,7 +28,7 @@ internal sealed class InMemoryQueue(IServiceProvider serviceProvider)
     /// </summary>
     /// <param name="queue">Name of the queue to save the message to</param>
     /// <param name="message">Message to send into the queue for later consumption</param>
-    public void WriteMessage<T>(string queue, T message)
+    public void WriteMessage<T>(string queue, T message, TimeSpan? scheduledDelay = null)
         where T : class
     {
         // Lock all read/write operations to be sequential
@@ -37,8 +37,7 @@ internal sealed class InMemoryQueue(IServiceProvider serviceProvider)
             if (!queuedMessages.ContainsKey(queue))
                 queuedMessages.Add(queue, new());
 
-            queuedMessages[queue].Enqueue(message);
-            trackingService?.RecordSentMessage(queue, message);
+            queuedMessages[queue].Enqueue(message, scheduledDelay.HasValue ? DateTime.UtcNow + scheduledDelay.Value : DateTime.MinValue);
         }
     }
 
@@ -66,13 +65,18 @@ internal sealed class InMemoryQueue(IServiceProvider serviceProvider)
             if (!queuedMessages.ContainsKey(queue))
                 return false;
 
-            // Queue has nothing in it, or the element in the qeue isn't of type T
-            if (!queuedMessages[queue].TryPeek(out var sample) || sample is not T castedMessage)
+            // Queue empty, do nothing
+            if (queuedMessages[queue].Count < 1)
+                return false;
+
+            // Queue has nothing in it, or the message shouldn't be delivered yet, or the element in the qeue isn't of type T
+            if (!queuedMessages[queue].TryPeek(out var sample, out DateTime scheduleDateTime) ||
+                scheduleDateTime > DateTime.UtcNow ||
+                sample is not T castedMessage)
                 return false;
 
             // Element we peeked is what was desired, remove it from the queue
             queuedMessages[queue].Dequeue();
-            trackingService?.RecordReceivedMessage(queue, castedMessage);
 
             message = castedMessage;
             return true;

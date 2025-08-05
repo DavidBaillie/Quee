@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.AzureServiceBus;
 using Quee.Interfaces;
+using Quee.Memory;
 
 namespace Quee.Extensions;
 
@@ -22,6 +23,22 @@ public static class RegistrationExtensions
         Action<IAzureServiceBusQueueConfigurator>? configuration = null)
     {
         IAzureServiceBusQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString);
+        configuration?.Invoke(configurator);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Introduce Quee using an in-memory provider to handle message communication
+    /// </summary>
+    /// <param name="services">Service collection for dependency injection</param>
+    /// <param name="configuration">Options object for configuration</param>
+    /// <returns>Cascading reference</returns>
+    public static IServiceCollection QueeInMemory(
+        this IServiceCollection services,
+        Action<IInMemoryQueueConfigurator>? configuration = null)
+    {
+        IInMemoryQueueConfigurator configurator = new InMemoryQueueConfigurator(services);
         configuration?.Invoke(configurator);
 
         return services;

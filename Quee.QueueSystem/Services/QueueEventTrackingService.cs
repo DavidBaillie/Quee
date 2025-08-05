@@ -49,7 +49,7 @@ internal sealed class QueueEventTrackingService
 
         // Save the message with a timestamp
         sentMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        logger.LogInformation("Adding message to sent queue {QueueName}: {Count}", queueName, sentMessages[queueName].Count);
+        //logger.LogInformation("Adding message to sent queue {QueueName}: {Count}", queueName, sentMessages[queueName].Count);
 
         // Check for too many messages
         if (sentMessages[queueName].Count > maximumMessagesPerQueue)
@@ -66,7 +66,7 @@ internal sealed class QueueEventTrackingService
 
         // Save the message with a timestamp
         receivedMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        logger.LogInformation("Adding message to received queue {QueueName}: {Count}", queueName, receivedMessages[queueName].Count);
+        //logger.LogInformation("Adding message to received queue {QueueName}: {Count}", queueName, receivedMessages[queueName].Count);
 
         // Check for too many messages
         if (receivedMessages[queueName].Count > maximumMessagesPerQueue)
@@ -83,7 +83,7 @@ internal sealed class QueueEventTrackingService
 
         // Save the message with a timestamp
         faultedMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        logger.LogInformation("Adding message to fault queue {QueueName}: {Count}", queueName, faultedMessages[queueName].Count);
+        //logger.LogInformation("Adding message to fault queue {QueueName}: {Count}", queueName, faultedMessages[queueName].Count);
 
         // Check for too many messages
         if (faultedMessages[queueName].Count > maximumMessagesPerQueue)
