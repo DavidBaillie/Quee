@@ -42,7 +42,7 @@ internal sealed class AzureServiceBusQueueConfigurator
                 connectionString,
                 queueName,
                 provider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>(),
-                provider.GetRequiredService<IConsumer<TMessage>>(),
+                provider.GetRequiredService<IServiceScopeFactory>(),
                 provider.GetService<IQueueEventTrackingService>()); // Service optional depending on if dev registered it for use
         });
 
@@ -85,7 +85,7 @@ internal sealed class AzureServiceBusQueueConfigurator
         services.AddTransient<IQueueMonitor, QueueMonitor>();
         services.AddSingleton<IQueueEventTrackingService>((provider) =>
         {
-            return new QueueEventTrackingService(maximumMessagesPerQueue, provider.GetRequiredService<ILogger<QueueEventTrackingService>>());
+            return new QueueEventTrackingService(maximumMessagesPerQueue);
         });
         return this;
     }

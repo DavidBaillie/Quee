@@ -15,7 +15,7 @@ internal class InMemoryQueueConfigurator
 {
     private readonly IServiceCollection services;
 
-    private bool allowRetries = true;
+    private readonly bool allowRetries = true;
 
 
     public InMemoryQueueConfigurator(IServiceCollection services)
@@ -44,9 +44,7 @@ internal class InMemoryQueueConfigurator
         services.AddTransient<IQueueMonitor, QueueMonitor>();
         services.AddSingleton<IQueueEventTrackingService>((provider) =>
         {
-            return new QueueEventTrackingService(
-                maximumMessagesPerQueue,
-                provider.GetRequiredService<ILogger<QueueEventTrackingService>>());
+            return new QueueEventTrackingService(maximumMessagesPerQueue);
         });
 
         return this;
@@ -79,13 +77,13 @@ internal class InMemoryQueueConfigurator
         services.RemoveAll<IConsumer<TMessage>>();
         services.RemoveAll<InMemoryQueueConsumer<TMessage>>();
 
-        services.AddTransient<IConsumer<TMessage>, TConsumer>();
+        services.AddScoped<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService((provider) =>
         {
             return new InMemoryQueueConsumer<TMessage>(
                 queueName,
                 100,
-                provider.GetRequiredService<IConsumer<TMessage>>(),
+                provider.GetRequiredService<IServiceScopeFactory>(),
                 provider.GetRequiredService<IMemoryQueue>(),
                 provider.GetRequiredService<ILogger<InMemoryQueueConsumer<TMessage>>>(),
                 provider.GetService<IQueueEventTrackingService>());

@@ -6,8 +6,8 @@
 public interface IQueueConfigurator
 {
     /// <summary>
-    /// Adds the message tracking service into the send/receive system to allow you to monitor 
-    /// all messages sent and received by the local runtime. 
+    /// Adds the message tracking service into the send/receive system to allow you to monitor
+    /// all messages sent and received by the local runtime.
     /// CAUTION: This will impact performance and should only be added in development or test environments where tracking all messages is important.
     /// </summary>
     /// <param name="maximumMessagesPerQueue">The maxmimum number of messages that will be stored for each queue in local memory</param>
@@ -43,7 +43,7 @@ public interface IQueueConfigurator
         where TConsumer : class, IConsumer<TMessage>;
 
     /// <summary>
-    /// When called, structures the queue to disable all provided retry time spans. Useful for when you'd like the test the system and don't 
+    /// When called, structures the queue to disable all provided retry time spans. Useful for when you'd like the test the system and don't
     /// want to wait for your predefined retries to run. Always runs the first consumption attempt and goes straight into fault if it fails.
     /// </summary>
     IQueueConfigurator DisableRetryPolicy();

@@ -3,7 +3,7 @@
 namespace Quee.Interfaces;
 
 /// <summary>
-/// Provides the ability to monitor and query all message sent and received by the local runtime. Generally an implementation for this 
+/// Provides the ability to monitor and query all message sent and received by the local runtime. Generally an implementation for this
 /// interface should only be registers in development and test builds as it adds unnecessary overhead to the runtime that will slow down
 /// performance and increase memory consumption.
 /// </summary>
@@ -34,7 +34,7 @@ public interface IQueueEventTrackingService
     void RecordSentMessage<T>(string queueName, T message) where T : class;
 
     /// <summary>
-    /// Tries to find a message of <typeparamref name="T"/> in the collection of received messages for the provided queue. 
+    /// Tries to find a message of <typeparamref name="T"/> in the collection of received messages for the provided queue.
     /// </summary>
     /// <typeparam name="T">Type of message to read</typeparam>
     /// <param name="queueName">Name of queue to search</param>
@@ -44,7 +44,7 @@ public interface IQueueEventTrackingService
     bool TryGetReceivedMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression) where T : class;
 
     /// <summary>
-    /// Tries to find a message of <typeparamref name="T"/> in the collection of sent messages for the provided queue. 
+    /// Tries to find a message of <typeparamref name="T"/> in the collection of sent messages for the provided queue.
     /// </summary>
     /// <typeparam name="T">Type of message to read</typeparam>
     /// <param name="queueName">Name of queue to search</param>
@@ -54,7 +54,7 @@ public interface IQueueEventTrackingService
     bool TryGetSentMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression) where T : class;
 
     /// <summary>
-    /// Tries to find a message of <typeparamref name="T"/> which has faulted 
+    /// Tries to find a message of <typeparamref name="T"/> which has faulted
     /// </summary>
     /// <typeparam name="T">Type of message to search for</typeparam>
     /// <param name="queueName">Name of queue fault happened in</param>

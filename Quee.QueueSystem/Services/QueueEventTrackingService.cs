@@ -1,13 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
-using Quee.Interfaces;
+﻿using Quee.Interfaces;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Quee.Services;
 
 /// <summary>
-/// Responsible for tracking messages sent and received from the queue for inspection of flow. This will hamper the performance 
-/// of any application and is only intended to be used in debugging or testing environents. 
+/// Responsible for tracking messages sent and received from the queue for inspection of flow. This will hamper the performance
+/// of any application and is only intended to be used in debugging or testing environents.
 /// </summary>
 internal sealed class QueueEventTrackingService
     : IQueueEventTrackingService
@@ -24,19 +23,17 @@ internal sealed class QueueEventTrackingService
     private readonly ConcurrentDictionary<string, Queue<EnqueueEvent>> faultedMessages = new();
 
     private readonly int maximumMessagesPerQueue;
-    private readonly ILogger<QueueEventTrackingService> logger;
 
     /// <summary>
     /// Constructor to define control for how much data is stored in the system.
     /// </summary>
     /// <param name="maximumMessagesPerQueue">Maximum messages allowed per queue</param>
-    public QueueEventTrackingService(int maximumMessagesPerQueue, ILogger<QueueEventTrackingService> logger)
+    public QueueEventTrackingService(int maximumMessagesPerQueue)
     {
         if (maximumMessagesPerQueue < 1)
             throw new ArgumentException("A maximum message count greater than 0 is required for the tracking service to function!");
 
         this.maximumMessagesPerQueue = maximumMessagesPerQueue;
-        this.logger = logger;
     }
 
     /// <inheritdoc />

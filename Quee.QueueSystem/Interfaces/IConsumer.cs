@@ -1,7 +1,7 @@
 ﻿namespace Quee.Interfaces;
 
 /// <summary>
-/// Defines a class that will consume messages of <typeparamref name="T"/> from the queue and handle a fault when the message cannot be consumed 
+/// Defines a class that will consume messages of <typeparamref name="T"/> from the queue and handle a fault when the message cannot be consumed
 /// </summary>
 /// <typeparam name="T">Message being sent in the queue</typeparam>
 public interface IConsumer<T> where T : class

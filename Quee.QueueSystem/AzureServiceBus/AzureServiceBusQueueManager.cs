@@ -6,7 +6,7 @@ internal static class AzureServiceBusQueueManager
 {
     /// <summary>
     /// Attempts to determine if the provided queue exists in the remote service bus, and if missing it attempts to create it.
-    /// Should permissions be insufficient or some failure happen in the process, returns false to indicate the queue does not exist 
+    /// Should permissions be insufficient or some failure happen in the process, returns false to indicate the queue does not exist
     /// at the time of method completion.
     /// </summary>
     /// <param name="connectionString">Connection string to the service bus</param>

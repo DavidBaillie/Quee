@@ -13,23 +13,23 @@ namespace QueueUtility.WebApp
             // Add services to the container.
 
             builder.Services.AddControllers();
-            builder.Services.QueeWithAzureServiceBus(builder.Configuration["ServiceBusConnectionString"]!, options =>
-            {
-                options.DisableRetryPolicy();
-                options.AddQueueMessageTracker()
-                    .AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue")
-                    .AddQueueProcessors<FailMessageCommand, FailMessageConsumer>("FailMessage-Queue",
-                        TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
-            });
-
-            //builder.Services.QueeInMemory(options =>
+            //builder.Services.QueeWithAzureServiceBus(builder.Configuration["ServiceBusConnectionString"]!, options =>
             //{
-            //    //options.DisableRetryPolicy();
+            //    options.DisableRetryPolicy();
             //    options.AddQueueMessageTracker()
             //        .AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue")
             //        .AddQueueProcessors<FailMessageCommand, FailMessageConsumer>("FailMessage-Queue",
-            //            TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            //            TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10));
             //});
+
+            builder.Services.QueeInMemory(options =>
+            {
+                //options.DisableRetryPolicy();
+                options.AddQueueMessageTracker()
+                    .AddQueueProcessors<LogMessageCommand, LogMessageConsumer>("LogMessage-Queue")
+                    .AddQueueProcessors<FailMessageCommand, FailMessageConsumer>("FailMessage-Queue",
+                        TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            });
 
             var app = builder.Build();
 

@@ -1,9 +1,10 @@
-﻿using Azure.Messaging.ServiceBus;
+﻿using System.Text;
+using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quee.Interfaces;
-using System.Text;
 
 namespace Quee.AzureServiceBus;
 
@@ -15,7 +16,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     private readonly string queueName;
 
     private readonly ILogger<AzureServiceBusQueueConsumer<TMessage>> logger;
-    private readonly IConsumer<TMessage> consumer;
+    private readonly IServiceScopeFactory serviceScopeFactory;
     private readonly IQueueEventTrackingService? trackingService;
 
     private readonly ServiceBusClient serviceBusClient;
@@ -33,13 +34,13 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         string connectionString,
         string queueName,
         ILogger<AzureServiceBusQueueConsumer<TMessage>> logger,
-        IConsumer<TMessage> consumer,
+        IServiceScopeFactory serviceScopeFactory,
         IQueueEventTrackingService? trackingService = null)
     {
         this.logger = logger;
+        this.serviceScopeFactory = serviceScopeFactory;
         this.connectionString = connectionString;
         this.queueName = queueName;
-        this.consumer = consumer;
         this.trackingService = trackingService;
 
         // Build the client for connecting to the service bus
@@ -68,7 +69,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             // Bind the chain of token to the source hosted service
             cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
-            // If the queue needs to be checked and the queue doesn't exist (we can't create it when missing), log the message and kill the startup 
+            // If the queue needs to be checked and the queue doesn't exist (we can't create it when missing), log the message and kill the startup
             if (!await AzureServiceBusQueueManager.TryCreateQueueIfMissingAsync(connectionString, queueName, cancellationToken))
             {
                 logger.LogError("Azure Service Bus Consumer for {MessageType} has failed to start because the queue does not exist and cannot be created.",
@@ -117,6 +118,9 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             return;
         }
 
+        using var scope = serviceScopeFactory.CreateScope();
+        var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<TMessage>>();
+
         try
         {
             // Run the developer implementation of the consumption
@@ -125,7 +129,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         }
         catch (Exception ex)
         {
-            await HandleConsumerInvocationFailureAsync(ex, args, message, cancellationTokenSource!.Token);
+            await HandleConsumerInvocationFailureAsync(consumer, ex, args, message, cancellationTokenSource!.Token);
             return;
         }
 
@@ -140,6 +144,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     /// <param name="exception">Exception encountered</param>
     /// <param name="args">Source message event arguments</param>
     private async Task HandleConsumerInvocationFailureAsync(
+        IConsumer<TMessage> consumer,
         Exception exception,
         ProcessMessageEventArgs args,
         AzureServiceBusMessage<TMessage> message,
@@ -170,7 +175,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             }
             finally
             {
-                // Always complete the message when we enter the fault logic 
+                // Always complete the message when we enter the fault logic
                 await args.CompleteMessageAsync(args.Message, cancellationToken);
             }
 
@@ -208,7 +213,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
 
     /// <summary>
     /// Called when the <see cref="ProcessMessageAsync(ProcessMessageEventArgs)"/> method is unable to complete
-    /// Generally speaking this method should never run as the error is handled in the Process method. If it does happen I need to come back 
+    /// Generally speaking this method should never run as the error is handled in the Process method. If it does happen I need to come back
     /// and make some fixes. Logging the event for tracking.
     /// </summary>
     /// <param name="args">Error event arguments</param>

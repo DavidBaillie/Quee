@@ -18,7 +18,7 @@ internal class InMemoryQueueSender<TMessage>
     private readonly TimeSpan[] retries;
 
     /// <summary>
-    /// Constructs a sender for the given <paramref name="queue"/> 
+    /// Constructs a sender for the given <paramref name="queue"/>
     /// </summary>
     /// <param name="queueName">Name of the queue to send messages to</param>
     /// <param name="queue">Queue provider for the in-memory queue</param>
