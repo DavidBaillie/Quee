@@ -1,10 +1,10 @@
-﻿using System.Text;
-using Azure.Messaging.ServiceBus;
+﻿using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quee.Interfaces;
+using System.Text;
 
 namespace Quee.AzureServiceBus;
 
@@ -227,9 +227,13 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     /// <inheritdoc />
     public void Dispose()
     {
+        Task.Run(async () =>
+        {
+            await serviceBusProcessor.DisposeAsync();
+            await serviceBusSender.DisposeAsync();
+            await serviceBusClient.DisposeAsync();
+        }).Wait();
+
         cancellationTokenSource?.Dispose();
-        serviceBusProcessor.DisposeAsync().GetAwaiter().GetResult();
-        serviceBusSender.DisposeAsync().GetAwaiter().GetResult();
-        serviceBusClient.DisposeAsync().GetAwaiter().GetResult();
     }
 }
