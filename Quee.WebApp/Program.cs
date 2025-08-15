@@ -9,7 +9,7 @@ public class Program
 
         var app = builder.Build();
         app.UseHttpsRedirection();
-        app.MapControllers();
+        app.MapGet("/", () => TypedResults.Ok("Running"));
         app.Run();
     }
 }

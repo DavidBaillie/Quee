@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Quee.Interfaces;
+using Quee.Messages;
 using System.Text;
 
 namespace Quee.AzureServiceBus;
@@ -125,7 +126,10 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         {
             // Run the developer implementation of the consumption
             // If an exception is encountered, enter retry policy and fault handler
-            await consumer.ConsumeAsync(message.Payload, cancellationTokenSource!.Token);
+            await consumer.ConsumeAsync(new Message<TMessage>()
+            {
+                Payload = message.Payload,
+            }, cancellationTokenSource!.Token);
         }
         catch (Exception ex)
         {
@@ -161,7 +165,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
                 // Save the message before processing the fault to make sure no data is lost
                 trackingService?.RecordFaultedMessage(queueName, message.Payload);
 
-                await consumer.ConsumeFaultAsync(new AzureServiceBusFaultMessage<TMessage>()
+                await consumer.ConsumeFaultAsync(new FaultMessage<TMessage>()
                 {
                     Payload = message.Payload,
                     Exceptions = message.RetryExceptions

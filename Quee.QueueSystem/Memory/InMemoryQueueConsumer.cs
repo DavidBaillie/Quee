@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
+using Quee.Messages;
 
 namespace Quee.Memory;
 
@@ -55,7 +56,10 @@ internal class InMemoryQueueConsumer<TMessage>(
         try
         {
             // try to consume the message, catch any exception that might prevent it
-            await consumer.ConsumeAsync(message.Payload, cancellationToken);
+            await consumer.ConsumeAsync(new Message<TMessage>()
+            {
+                Payload = message.Payload,
+            }, cancellationToken);
             trackingService?.RecordReceivedMessage(queueName, message.Payload);
         }
         catch (Exception ex)
@@ -81,7 +85,7 @@ internal class InMemoryQueueConsumer<TMessage>(
             try
             {
                 trackingService?.RecordFaultedMessage(queueName, message.Payload);
-                await consumer.ConsumeFaultAsync(new InMemoryFaultMessage<TMessage>()
+                await consumer.ConsumeFaultAsync(new FaultMessage<TMessage>()
                 {
                     Payload = message.Payload,
                     Exceptions = structuredExceptions
