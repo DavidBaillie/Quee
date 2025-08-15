@@ -1,7 +1,0 @@
-﻿using Quee.Abstracts;
-
-namespace Quee.AzureServiceBus;
-
-internal class AzureServiceBusFaultMessage<TMessage>
-    : FaultMessageBase<TMessage>
-    where TMessage : class;

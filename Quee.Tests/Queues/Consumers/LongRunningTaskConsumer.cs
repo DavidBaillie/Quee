@@ -1,4 +1,5 @@
 ﻿using Quee.Interfaces;
+using Quee.Messages;
 using Quee.Tests.Queues.Commands;
 
 namespace Quee.Tests.Queues.Consumers;
@@ -13,9 +14,9 @@ internal class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
     /// </summary>
     /// <param name="message">Message with delay time</param>
     /// <param name="cancellationToken">Process token</param>
-    public async Task ConsumeAsync(LongRunningTaskCommand message, CancellationToken cancellationToken)
+    public async Task ConsumeAsync(Message<LongRunningTaskCommand> message, CancellationToken cancellationToken)
     {
-        await Task.Delay(message.milisecondsToWait);
+        await Task.Delay(message.Payload.milisecondsToWait);
     }
 
     /// <summary>
@@ -23,7 +24,7 @@ internal class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
     /// </summary>
     /// <param name="fault">Faulted message</param>
     /// <param name="cancellationToken">Process token</param>
-    public Task ConsumeFaultAsync(IFault<LongRunningTaskCommand> fault, CancellationToken cancellationToken)
+    public Task ConsumeFaultAsync(FaultMessage<LongRunningTaskCommand> fault, CancellationToken cancellationToken)
     {
         // Should never run
         return Task.CompletedTask;
