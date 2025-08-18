@@ -16,7 +16,7 @@ internal class InMemoryMessage<T>
     /// <summary>
     /// Exceptions encountered while attempting to invoke the consumer across retries
     /// </summary>
-    public List<string> RetryExceptions { get; set; } = [];
+    public List<Exception> RetryExceptions { get; set; } = [];
 
     /// <summary>
     /// Message being sent in the queue

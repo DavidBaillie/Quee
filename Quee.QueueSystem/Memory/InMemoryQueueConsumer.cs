@@ -77,18 +77,16 @@ internal class InMemoryQueueConsumer<TMessage>(
     /// <param name="cancellationToken">Process token</param>
     private async Task HandleFailureAsync(IConsumer<TMessage> consumer, InMemoryMessage<TMessage> message, Exception exception, CancellationToken cancellationToken)
     {
-        List<string> structuredExceptions = [.. message.RetryExceptions, $"{exception.GetType().Name} - {exception.Message}"];
-
-        // Ran out of retries
+        // Ran out of retries, move the message into the fault consumer and allow the user to define what happens now that the message has failed
         if (message.RetryDelays is null || message.RetryNumber >= message.RetryDelays.Length)
         {
             try
             {
                 trackingService?.RecordFaultedMessage(queueName, message.Payload);
-                await consumer.ConsumeFaultAsync(new FaultMessage<TMessage>()
+                await consumer.ConsumeFaultAsync(new InMemoryFaultMessage<TMessage>()
                 {
                     Payload = message.Payload,
-                    Exceptions = structuredExceptions
+                    SourceExceptions = [.. message.RetryExceptions, exception]
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -107,7 +105,7 @@ internal class InMemoryQueueConsumer<TMessage>(
             Payload = message.Payload,
             RetryDelays = message.RetryDelays,
             RetryNumber = message.RetryNumber + 1,
-            RetryExceptions = structuredExceptions
+            RetryExceptions = [.. message.RetryExceptions, exception]
         }, message.RetryDelays[message.RetryNumber]);
     }
 }
