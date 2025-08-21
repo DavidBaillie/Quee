@@ -1,6 +1,7 @@
-﻿namespace Quee.Abstracts;
+﻿namespace Quee.Memory;
 
-internal class MessageBase<T> where T : class
+internal class InMemoryMessage<T>
+    where T : class
 {
     /// <summary>
     /// Attempt number in the retry series
@@ -15,10 +16,10 @@ internal class MessageBase<T> where T : class
     /// <summary>
     /// Exceptions encountered while attempting to invoke the consumer across retries
     /// </summary>
-    public List<string> RetryExceptions { get; set; } = [];
+    public List<Exception> RetryExceptions { get; set; } = [];
 
     /// <summary>
-    /// Developer message being sent in the queue
+    /// Message being sent in the queue
     /// </summary>
     public required T Payload { get; set; }
 }

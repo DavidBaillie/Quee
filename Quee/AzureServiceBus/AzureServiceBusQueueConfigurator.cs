@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Quee.Extensions;
 using Quee.Interfaces;
 using Quee.QueueOptions;
-using Quee.Services;
 
 namespace Quee.AzureServiceBus;
 
@@ -28,7 +28,7 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
+    public IQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
@@ -50,7 +50,7 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
+    public IQueueConfigurator AddSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
     {
         services.RemoveAll<IConsumer<TMessage>>();
 
@@ -67,26 +67,19 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
+    public IQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        AddQueueSender<TMessage>(queueName, retries);
-        AddQueueConsumer<TMessage, TConsumer>(queueName);
+        AddSender<TMessage>(queueName, retries);
+        AddConsumer<TMessage, TConsumer>(queueName);
         return this;
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueMessageTracker(int maximumMessagesPerQueue = 100_000)
+    public IQueueConfigurator AddMessageTracker(int maximumMessagesPerQueue = 100_000)
     {
-        services.RemoveAll<IQueueMonitor>();
-        services.RemoveAll<IQueueEventTrackingService>();
-
-        services.AddTransient<IQueueMonitor, QueueMonitor>();
-        services.AddSingleton<IQueueEventTrackingService>((provider) =>
-        {
-            return new QueueEventTrackingService(maximumMessagesPerQueue);
-        });
+        services.AddQueeMessageTracker(maximumMessagesPerQueue);
         return this;
     }
 

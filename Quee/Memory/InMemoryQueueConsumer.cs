@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Quee.Interfaces;
+using Quee.Messages;
 
 namespace Quee.Memory;
 
@@ -55,7 +56,10 @@ internal class InMemoryQueueConsumer<TMessage>(
         try
         {
             // try to consume the message, catch any exception that might prevent it
-            await consumer.ConsumeAsync(message.Payload, cancellationToken);
+            await consumer.ConsumeAsync(new Message<TMessage>()
+            {
+                Payload = message.Payload,
+            }, cancellationToken);
             trackingService?.RecordReceivedMessage(queueName, message.Payload);
         }
         catch (Exception ex)
@@ -73,9 +77,7 @@ internal class InMemoryQueueConsumer<TMessage>(
     /// <param name="cancellationToken">Process token</param>
     private async Task HandleFailureAsync(IConsumer<TMessage> consumer, InMemoryMessage<TMessage> message, Exception exception, CancellationToken cancellationToken)
     {
-        List<string> structuredExceptions = [.. message.RetryExceptions, $"{exception.GetType().Name} - {exception.Message}"];
-
-        // Ran out of retries
+        // Ran out of retries, move the message into the fault consumer and allow the user to define what happens now that the message has failed
         if (message.RetryDelays is null || message.RetryNumber >= message.RetryDelays.Length)
         {
             try
@@ -84,7 +86,7 @@ internal class InMemoryQueueConsumer<TMessage>(
                 await consumer.ConsumeFaultAsync(new InMemoryFaultMessage<TMessage>()
                 {
                     Payload = message.Payload,
-                    Exceptions = structuredExceptions
+                    SourceExceptions = [.. message.RetryExceptions, exception]
                 }, cancellationToken);
             }
             catch (Exception ex)
@@ -103,7 +105,7 @@ internal class InMemoryQueueConsumer<TMessage>(
             Payload = message.Payload,
             RetryDelays = message.RetryDelays,
             RetryNumber = message.RetryNumber + 1,
-            RetryExceptions = structuredExceptions
+            RetryExceptions = [.. message.RetryExceptions, exception]
         }, message.RetryDelays[message.RetryNumber]);
     }
 }

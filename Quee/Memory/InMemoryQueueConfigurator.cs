@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Quee.Extensions;
 using Quee.Interfaces;
 using Quee.QueueOptions;
-using Quee.Services;
 
 namespace Quee.Memory;
 
@@ -36,22 +36,14 @@ internal class InMemoryQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueMessageTracker(int maximumMessagesPerQueue = 100000)
+    public IQueueConfigurator AddMessageTracker(int maximumMessagesPerQueue = 100000)
     {
-        services.RemoveAll<IQueueMonitor>();
-        services.RemoveAll<IQueueEventTrackingService>();
-
-        services.AddTransient<IQueueMonitor, QueueMonitor>();
-        services.AddSingleton<IQueueEventTrackingService>((provider) =>
-        {
-            return new QueueEventTrackingService(maximumMessagesPerQueue);
-        });
-
+        services.AddQueeMessageTracker(maximumMessagesPerQueue);
         return this;
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueSender<TMessage>(string queueName, params TimeSpan[] retries)
+    public IQueueConfigurator AddSender<TMessage>(string queueName, params TimeSpan[] retries)
         where TMessage : class
     {
         services.RemoveAll<IQueueSender<TMessage>>();
@@ -70,7 +62,7 @@ internal class InMemoryQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueConsumer<TMessage, TConsumer>(string queueName)
+    public IQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName)
         where TConsumer : class, IConsumer<TMessage>
         where TMessage : class
     {
@@ -93,12 +85,12 @@ internal class InMemoryQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IQueueConfigurator AddQueueProcessors<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
+    public IQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, params TimeSpan[] retries)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        AddQueueSender<TMessage>(queueName, retries);
-        AddQueueConsumer<TMessage, TConsumer>(queueName);
+        AddSender<TMessage>(queueName, retries);
+        AddConsumer<TMessage, TConsumer>(queueName);
         return this;
     }
 }
