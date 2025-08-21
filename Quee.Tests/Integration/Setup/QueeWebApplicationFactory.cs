@@ -21,7 +21,8 @@ internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
             {
                 options.DisableRetryPolicy()
                     .AddMessageTracker()
-                    .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(nameof(LongRunningTaskCommand));
+                    .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(nameof(LongRunningTaskCommand))
+                    .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>(nameof(SimpleMessageCommand));
             });
         });
     }
