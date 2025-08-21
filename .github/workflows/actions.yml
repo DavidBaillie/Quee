@@ -22,7 +22,7 @@ jobs:
         run: dotnet restore
 
       - name: Build Quee
-        run: dotnet build ./Quee/Quee.csproj -c Release
+        run: dotnet build ./Quee -c Release
 
       - name: Build and run Quee.Tests
         run: |
