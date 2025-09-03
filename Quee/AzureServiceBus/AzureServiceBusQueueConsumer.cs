@@ -15,7 +15,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
 {
     private readonly string connectionString;
     private readonly string queueName;
-
+    private readonly AzureServiceBusConsumerOptions options;
     private readonly ILogger<AzureServiceBusQueueConsumer<TMessage>> logger;
     private readonly IServiceScopeFactory serviceScopeFactory;
     private readonly IQueueEventTrackingService? trackingService;
@@ -34,6 +34,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     public AzureServiceBusQueueConsumer(
         string connectionString,
         string queueName,
+        AzureServiceBusConsumerOptions options,
         ILogger<AzureServiceBusQueueConsumer<TMessage>> logger,
         IServiceScopeFactory serviceScopeFactory,
         IQueueEventTrackingService? trackingService = null)
@@ -42,6 +43,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         this.serviceScopeFactory = serviceScopeFactory;
         this.connectionString = connectionString;
         this.queueName = queueName;
+        this.options = options;
         this.trackingService = trackingService;
 
         // Build the client for connecting to the service bus
@@ -49,13 +51,19 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         {
             RetryOptions = new()
             {
-                Delay = TimeSpan.FromSeconds(5),
+                Delay = TimeSpan.FromSeconds(1),
                 Mode = ServiceBusRetryMode.Exponential,
-                MaxDelay = TimeSpan.FromSeconds(60),
+                MaxDelay = TimeSpan.FromSeconds(30),
                 MaxRetries = 5
             }
         });
-        serviceBusProcessor = serviceBusClient.CreateProcessor(queueName, new ServiceBusProcessorOptions());
+
+        // Build the processor with settings for controlling how the processing works
+        serviceBusProcessor = serviceBusClient.CreateProcessor(queueName, new ServiceBusProcessorOptions()
+        {
+            MaxConcurrentCalls = options.ConcurrencyLimit,
+            PrefetchCount = options.PrefetchLimit
+        });
         serviceBusSender = serviceBusClient.CreateSender(queueName);
     }
 
@@ -63,7 +71,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     public async Task StartAsync(
         CancellationToken cancellationToken)
     {
-        logger.LogInformation("Starting Azure Service Bus Consumer for {MessageType}", typeof(TMessage).GetType().Name);
+        logger.LogInformation("Starting Azure Service Bus Consumer for {QueueName}", queueName);
 
         try
         {
@@ -73,8 +81,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             // If the queue needs to be checked and the queue doesn't exist (we can't create it when missing), log the message and kill the startup
             if (!await AzureServiceBusQueueManager.TryCreateQueueIfMissingAsync(connectionString, queueName, cancellationToken))
             {
-                logger.LogError("Azure Service Bus Consumer for {MessageType} has failed to start because the queue does not exist and cannot be created.",
-                    typeof(TMessage).GetType().Name);
+                logger.LogError("Azure Service Bus Consumer for {QueueName} has failed to start because the queue does not exist and cannot be created.",
+                    queueName);
                 return;
             }
 
@@ -85,8 +93,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Azure Service Bus Consumer for {MessageType} has failed to start because of an exception that was encountered during start.",
-                    typeof(TMessage).GetType().Name);
+            logger.LogError(ex, "Azure Service Bus Consumer for {QueueName} has failed to start because of an exception that was encountered during start.",
+                    queueName);
         }
     }
 
@@ -114,8 +122,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         if (message is null || message.Payload is null)
         {
             await args.DeadLetterMessageAsync(args.Message, cancellationToken: cancellationTokenSource!.Token);
-            logger.LogError("Azure Service Bus Consumer for {MessageType} has failed consume message {MessageId} because it could not be deserialized. See deadletter queue for message.",
-                    typeof(TMessage).GetType().Name, args.Message.MessageId);
+            logger.LogError("Azure Service Bus Consumer for {QueueName} has failed consume message {MessageId} because it could not be deserialized. See deadletter queue for message.",
+                    queueName, args.Message.MessageId);
             return;
         }
 
@@ -174,8 +182,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             catch (Exception ex)
             {
                 // If the fault dies we log it, dev shouldn't let this happen generally
-                logger.LogError(ex, "Azure Service Bus Consumer for {MessageType} invoked the fault consumer an encountered an exception.",
-                    typeof(TMessage).GetType().Name);
+                logger.LogError(ex, "Azure Service Bus Consumer for {QueueName} invoked the fault consumer an encountered an exception.",
+                    queueName);
             }
             finally
             {
@@ -209,9 +217,9 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Azure Service Bus Consumer for {MessageType} processed a faulted message and is retrying for attempt {AttemptNumber}. An exception was encountered" +
+            logger.LogError(ex, "Azure Service Bus Consumer for {QueueName} processed a faulted message and is retrying for attempt {AttemptNumber}. An exception was encountered" +
                 "and has prevented the message from being queued for a later attempt.",
-                typeof(TMessage).GetType().Name, message.RetryNumber + 1);
+                queueName, message.RetryNumber + 1);
         }
     }
 
@@ -223,8 +231,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     /// <param name="args">Error event arguments</param>
     private Task ProcessErrorAsync(ProcessErrorEventArgs args)
     {
-        logger.LogError(args.Exception, "Azure Service Bus Consumer for {MessageType} received an error event for the queue {QueueName}. Message {MessageId} cannot be processed!",
-                    typeof(TMessage).GetType().Name, queueName, args.Identifier);
+        logger.LogError(args.Exception, "Azure Service Bus Consumer for {QueueName} received an error event, message {MessageId} cannot be processed!",
+                    queueName, args.Identifier);
         return Task.CompletedTask;
     }
 
