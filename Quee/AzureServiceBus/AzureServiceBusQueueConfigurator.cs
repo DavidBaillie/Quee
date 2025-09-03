@@ -32,6 +32,14 @@ internal sealed class AzureServiceBusQueueConfigurator
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
+        return AddConsumer<TMessage, TConsumer>(queueName, new());
+    }
+
+    /// <inheritdoc />
+    public IAzureServiceBusQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions options)
+        where TMessage : class
+        where TConsumer : class, IConsumer<TMessage>
+    {
         services.RemoveAll<IConsumer<TMessage>>();
         services.RemoveAll<AzureServiceBusQueueConsumer<TMessage>>();
 
@@ -41,6 +49,7 @@ internal sealed class AzureServiceBusQueueConfigurator
             return new AzureServiceBusQueueConsumer<TMessage>(
                 connectionString,
                 queueName,
+                new AzureServiceBusConsumerOptions(),
                 provider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>(),
                 provider.GetRequiredService<IServiceScopeFactory>(),
                 provider.GetService<IQueueEventTrackingService>()); // Service optional depending on if dev registered it for use
@@ -71,8 +80,16 @@ internal sealed class AzureServiceBusQueueConfigurator
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
+        return AddSenderAndConsumer<TMessage, TConsumer>(queueName, new AzureServiceBusConsumerOptions(), retries);
+    }
+
+    /// <inheritdoc />
+    public IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions options, params TimeSpan[] retries)
+    where TMessage : class
+    where TConsumer : class, IConsumer<TMessage>
+    {
         AddSender<TMessage>(queueName, retries);
-        AddConsumer<TMessage, TConsumer>(queueName);
+        AddConsumer<TMessage, TConsumer>(queueName, options);
         return this;
     }
 
@@ -83,6 +100,7 @@ internal sealed class AzureServiceBusQueueConfigurator
         return this;
     }
 
+    /// <inheritdoc />
     public IQueueConfigurator DisableRetryPolicy()
     {
         services.RemoveAll<QueueRetryOptions>();
