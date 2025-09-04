@@ -6,13 +6,13 @@ namespace Quee.Tests.Integration;
 /// <summary>
 /// Base class for all integration tests to centralize logic. Enables parallelizable processing by default. 
 /// </summary>
-[Parallelizable(ParallelScope.All), TestFixture, Category("Integration")]
-internal abstract class IntegrationTestBase
+[Parallelizable(ParallelScope.All), TestFixture, Category("AzureServiceBus")]
+internal abstract class AzureServiceBusTestBase
 {
     /// <summary>
     /// Web Application factory to simulate API
     /// </summary>
-    protected readonly QueeWebApplicationFactory WebApplicationFactory = new();
+    protected readonly AzureServiceBusWebApplicationFactory WebApplicationFactory = new();
 
     /// <summary>
     /// Creates a disposable <see cref="HttpClient"/> to make calls to the API with

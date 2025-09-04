@@ -4,9 +4,13 @@ using Quee.Extensions;
 using Quee.Tests.Queues.Commands;
 using Quee.Tests.Queues.Consumers;
 
-namespace Quee.Tests.Integration.Setup;
+namespace Quee.Tests.AzureServiceBus.Setup;
 
-internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
+/// <summary>
+/// Sets up a <see cref="WebApplicationFactory{TEntryPoint}"/> using the in-memory service provider for testing how the
+/// queue handles running when using the in-memory provider.
+/// </summary>
+internal class InMemoryWebApplicationFactory : WebApplicationFactory<WebApp.Program>
 {
     /// <inheritdoc />
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -21,8 +25,8 @@ internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
             {
                 options.DisableRetryPolicy()
                     .AddMessageTracker()
-                    .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>("quee-test-lrt")
-                    .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>("quee-test-sm");
+                    .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(nameof(LongRunningTaskCommand))
+                    .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>(nameof(SimpleMessageCommand));
             });
         });
     }

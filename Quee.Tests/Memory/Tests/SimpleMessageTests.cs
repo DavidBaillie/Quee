@@ -1,10 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.Interfaces;
+using Quee.Tests.Memory;
 using Quee.Tests.Queues.Commands;
 
-namespace Quee.Tests.Integration.Tests;
+namespace Quee.Tests.Integration.Memory;
 
-internal class SimpleMessageTests : IntegrationTestBase
+internal class SimpleMessageTests : InMemoryTestBase
 {
     [TestCase("Singular")]
     [TestCase("Something longer")]

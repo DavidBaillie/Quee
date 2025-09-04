@@ -1,10 +1,10 @@
-﻿namespace Quee.Tests.Integration;
+﻿namespace Quee.Tests.Memory;
 
 /// <summary>
 /// Sets up and tears down all tests under the integration test folder
 /// </summary>
 [SetUpFixture]
-internal class IntegrationLifeCycle
+internal class InMemoryLifeCycle
 {
     /// <summary>
     /// Handles setting up the test environment before tests run

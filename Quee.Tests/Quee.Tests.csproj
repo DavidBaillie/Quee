@@ -27,4 +27,8 @@
     <ProjectReference Include="..\Quee.WebApp\Quee.WebApp.csproj" />
   </ItemGroup>
 
+<ItemGroup>
+	<None Update="testsettings.json" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
+
 </Project>

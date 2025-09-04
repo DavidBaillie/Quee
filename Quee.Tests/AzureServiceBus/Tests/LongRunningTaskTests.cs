@@ -1,12 +1,15 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.Interfaces;
+using Quee.Tests.Integration;
 using Quee.Tests.Queues.Commands;
 
-namespace Quee.Tests.Integration.Tests;
+namespace Quee.Tests.AzureServiceBus.Tests;
 
 
-internal class LongRunningTaskTests : IntegrationTestBase
+internal class LongRunningTaskTests : AzureServiceBusTestBase
 {
+    private const string QUEUE_NAME = "quee-test-lrt";
+
     [Test]
     public async Task WhenQueueLongRunningTaskWillBeConsumed()
     {
@@ -22,21 +25,21 @@ internal class LongRunningTaskTests : IntegrationTestBase
 
         // Assert
         var sentMessage = await monitor.WaitForMessageToSend<LongRunningTaskCommand>(
-            nameof(LongRunningTaskCommand),
+            QUEUE_NAME,
             TimeSpan.FromSeconds(1),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(sentMessage != null, $"{nameof(LongRunningTaskCommand)} was requested to send into the Queue but no message was recorded as being sent.", sourceMessage);
 
         var consumedMessage = await monitor.WaitForMessageToReceive<LongRunningTaskCommand>(
-            nameof(LongRunningTaskCommand),
+            QUEUE_NAME,
             TimeSpan.FromSeconds(10),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(consumedMessage != null, $"{nameof(LongRunningTaskCommand)} was sent into the queue, but was never consumed.", sourceMessage);
 
         var faultMessage = await monitor.WaitForMessageToFault<LongRunningTaskCommand>(
-            nameof(LongRunningTaskCommand),
+            QUEUE_NAME,
             TimeSpan.FromMilliseconds(100),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
