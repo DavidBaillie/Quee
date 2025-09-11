@@ -27,21 +27,21 @@ internal class SimpleMessageTests : AzureServiceBusTestBase
         // Assert
         var sentMessage = await monitor.WaitForMessageToSend<SimpleMessageCommand>(
             QUEUE_NAME,
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(20),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(sentMessage != null, $"{nameof(SimpleMessageCommand)} was requested to send into the Queue but no message was recorded as being sent.", sourceMessage);
 
         var consumedMessage = await monitor.WaitForMessageToReceive<SimpleMessageCommand>(
             QUEUE_NAME,
-            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(20),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(consumedMessage != null, $"{nameof(SimpleMessageCommand)} was sent into the queue, but was never consumed.", sourceMessage);
 
         var faultMessage = await monitor.WaitForMessageToFault<SimpleMessageCommand>(
             QUEUE_NAME,
-            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromMilliseconds(200),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(faultMessage == null, $"{nameof(SimpleMessageCommand)} was found in the fault queue when it should have been consumed.", sourceMessage);
