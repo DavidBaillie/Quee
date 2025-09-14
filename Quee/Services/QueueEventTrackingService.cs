@@ -40,67 +40,77 @@ internal sealed class QueueEventTrackingService
     public void RecordSentMessage<T>(string queueName, T message)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
+
         // Make sure the dictionary element exists
-        if (!sentMessages.ContainsKey(queueName))
-            sentMessages.TryAdd(queueName, []);
+        var queue = sentMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
 
         // Save the message with a timestamp
-        sentMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        //logger.LogInformation("Adding message to sent queue {QueueName}: {Count}", queueName, sentMessages[queueName].Count);
+        queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
-        if (sentMessages[queueName].Count > maximumMessagesPerQueue)
-            sentMessages[queueName].Dequeue();
+        if (queue.Count > maximumMessagesPerQueue)
+            queue.Dequeue();
     }
 
     /// <inheritdoc />
     public void RecordReceivedMessage<T>(string queueName, T message)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
+
         // Make sure the dictionary element exists
-        if (!receivedMessages.ContainsKey(queueName))
-            receivedMessages.TryAdd(queueName, []);
+        var queue = receivedMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
 
         // Save the message with a timestamp
-        receivedMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        //logger.LogInformation("Adding message to received queue {QueueName}: {Count}", queueName, receivedMessages[queueName].Count);
+        queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
-        if (receivedMessages[queueName].Count > maximumMessagesPerQueue)
-            receivedMessages[queueName].Dequeue();
+        if (queue.Count > maximumMessagesPerQueue)
+            queue.Dequeue();
     }
 
     /// <inheritdoc />
     public void RecordFaultedMessage<T>(string queueName, T message)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
+
         // Make sure the dictionary element exists
-        if (!faultedMessages.ContainsKey(queueName))
-            faultedMessages.TryAdd(queueName, []);
+        var queue = faultedMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
 
         // Save the message with a timestamp
-        faultedMessages[queueName].Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
-        //logger.LogInformation("Adding message to fault queue {QueueName}: {Count}", queueName, faultedMessages[queueName].Count);
+        queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
-        if (faultedMessages[queueName].Count > maximumMessagesPerQueue)
-            faultedMessages[queueName].Dequeue();
+        if (queue.Count > maximumMessagesPerQueue)
+            queue.Dequeue();
     }
 
     /// <inheritdoc />
     public bool TryGetSentMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(searchExpression, nameof(searchExpression));
+
         value = null;
 
         // No queue, no message
-        if (!sentMessages.ContainsKey(queueName))
+        if (!sentMessages.TryGetValue(queueName, out var queue))
             return false;
 
         // Check all the elements of the queue against them being of T and matching the desired search expression
-        foreach (var queuedMessage in sentMessages[queueName])
+        foreach (var queuedMessage in queue)
         {
-            if (queuedMessage.Message is T resultMessage && searchExpression.Invoke(resultMessage))
+            if (queuedMessage is null)
+                throw new NullReferenceException($"Queue Event Tracking service encountered a null record in the sent messages for the {queueName} queue. " +
+                    $"This should be impossible. Please submit a bug report.");
+
+            if (queuedMessage.Message is T resultMessage && resultMessage is not null && searchExpression.Invoke(resultMessage))
             {
                 value = resultMessage;
                 return true;
@@ -114,16 +124,23 @@ internal sealed class QueueEventTrackingService
     public bool TryGetReceivedMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(searchExpression, nameof(searchExpression));
+
         value = null;
 
         // No queue, no message
-        if (!receivedMessages.ContainsKey(queueName))
+        if (!receivedMessages.TryGetValue(queueName, out var queue))
             return false;
 
         // Check all the elements of the queue against them being of T and matching the desired search expression
-        foreach (var queuedMessage in receivedMessages[queueName])
+        foreach (var queuedMessage in queue)
         {
-            if (queuedMessage.Message is T resultMessage && searchExpression.Invoke(resultMessage))
+            if (queuedMessage is null)
+                throw new NullReferenceException($"Queue Event Tracking service encountered a null record in the received messages for the {queueName} queue. " +
+                    $"This should be impossible. Please submit a bug report.");
+
+            if (queuedMessage.Message is T resultMessage && resultMessage is not null && searchExpression.Invoke(resultMessage))
             {
                 value = resultMessage;
                 return true;
@@ -137,16 +154,23 @@ internal sealed class QueueEventTrackingService
     public bool TryGetFaultedMessage<T>(string queueName, [NotNullWhen(true)] out T? value, Predicate<T> searchExpression)
         where T : class
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(queueName, nameof(queueName));
+        ArgumentNullException.ThrowIfNull(searchExpression, nameof(searchExpression));
+
         value = null;
 
         // No queue, no message
-        if (!faultedMessages.ContainsKey(queueName))
+        if (!faultedMessages.TryGetValue(queueName, out var queue))
             return false;
 
         // Check all the elements of the queue against them being of T and matching the desired search expression
-        foreach (var queuedMessage in faultedMessages[queueName])
+        foreach (var queuedMessage in queue)
         {
-            if (queuedMessage.Message is T resultMessage && searchExpression.Invoke(resultMessage))
+            if (queuedMessage is null)
+                throw new NullReferenceException($"Queue Event Tracking service encountered a null record in the faulted messages for the {queueName} queue. " +
+                    $"This should be impossible. Please submit a bug report.");
+
+            if (queuedMessage.Message is T resultMessage && resultMessage is not null && searchExpression.Invoke(resultMessage))
             {
                 value = resultMessage;
                 return true;
