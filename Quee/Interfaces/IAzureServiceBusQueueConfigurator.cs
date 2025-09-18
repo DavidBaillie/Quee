@@ -25,4 +25,11 @@ public interface IAzureServiceBusQueueConfigurator
     IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions options, params TimeSpan[] retries)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>;
+
+    /// <summary>
+    /// Adds the provided <paramref name="options"/> to the registered consumer for the given <paramref name="queueName"/>
+    /// </summary>
+    /// <param name="queueName">Name of the queue these options will apply to</param>
+    /// <param name="options">Options to apply to queue consumption</param>
+    IAzureServiceBusQueueConfigurator AddQueueConsumerOptions(string queueName, AzureServiceBusConsumerOptions options);
 }

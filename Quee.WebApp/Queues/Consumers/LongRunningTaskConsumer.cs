@@ -1,13 +1,13 @@
 ﻿using Quee.Interfaces;
 using Quee.Messages;
-using Quee.Tests.Queues.Commands;
+using Quee.WebApp.Queues.Commands;
 
-namespace Quee.Tests.Queues.Consumers;
+namespace Quee.WebApp.Queues.Consumers;
 
 /// <summary>
 /// Generic consumer that delays completion for a set number of milliseconds to simulate some asyncronous activity
 /// </summary>
-internal class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
+public class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
 {
     /// <summary>
     /// Consumes the delay message, causing a delay of <see cref="LongRunningTaskCommand.milisecondsToWait"/> milliseconds

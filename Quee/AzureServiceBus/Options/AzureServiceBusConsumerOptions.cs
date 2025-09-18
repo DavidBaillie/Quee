@@ -3,6 +3,12 @@
 public class AzureServiceBusConsumerOptions
 {
     /// <summary>
+    /// This defines the queue that the consumer options are designed to target. This allows consumer for queues to dynamically 
+    /// load the configuration for their queue during the startup for the handler.
+    /// </summary>
+    public string? TargetQueue { get; set; }
+
+    /// <summary>
     /// Defines how many messages can be processed at the same by the consumer. The default value of 1
     /// will cause all messages to be consumed sequentially, meaning message #1 must complete before message #2 can begin. 
     /// Larger values than 1 will allow the consumer to process multiple messages as concurrent <see cref="Task"/> objects

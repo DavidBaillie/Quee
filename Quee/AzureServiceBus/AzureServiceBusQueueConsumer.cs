@@ -34,17 +34,19 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     public AzureServiceBusQueueConsumer(
         string connectionString,
         string queueName,
-        AzureServiceBusConsumerOptions options,
-        ILogger<AzureServiceBusQueueConsumer<TMessage>> logger,
-        IServiceScopeFactory serviceScopeFactory,
-        IQueueEventTrackingService? trackingService = null)
+        IServiceProvider serviceProvider)
     {
-        this.logger = logger;
-        this.serviceScopeFactory = serviceScopeFactory;
         this.connectionString = connectionString;
         this.queueName = queueName;
-        this.options = options;
-        this.trackingService = trackingService;
+
+        logger = serviceProvider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>();
+        serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
+        trackingService = serviceProvider.GetService<IQueueEventTrackingService>();
+        options = serviceProvider.GetServices<AzureServiceBusConsumerOptions>()
+            .FirstOrDefault(
+                x => x.TargetQueue == queueName,
+                defaultValue: new AzureServiceBusConsumerOptions()
+            );
 
         // Build the client for connecting to the service bus
         serviceBusClient = new ServiceBusClient(connectionString, new ServiceBusClientOptions()
