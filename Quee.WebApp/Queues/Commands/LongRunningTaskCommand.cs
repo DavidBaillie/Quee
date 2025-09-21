@@ -1,11 +1,11 @@
-﻿namespace Quee.Tests.Queues.Commands;
+﻿namespace Quee.WebApp.Queues.Commands;
 
 /// <summary>
 /// Command to process a generic task that takes <paramref name="milisecondsToWait"/> to complete. 
 /// Designed to simulate some long running task that will consume CPU cycles.
 /// </summary>
 /// <param name="milisecondsToWait">Miliseconds to wait before command is complete</param>
-internal record LongRunningTaskCommand(int millisecondsToWait)
+public record LongRunningTaskCommand(int millisecondsToWait)
 {
     /// <summary>
     /// Used to identify the message when searching amoung duplicates of the message in the queue

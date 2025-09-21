@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using Quee.Interfaces;
+﻿using Quee.Interfaces;
 using Quee.Messages;
-using Quee.Tests.Queues.Commands;
+using Quee.WebApp.Queues.Commands;
 
-namespace Quee.Tests.Queues.Consumers;
+namespace Quee.WebApp.Queues.Consumers;
 
-internal class SimpleMessageConsumer(ILogger<SimpleMessageConsumer> logger)
+public class SimpleMessageConsumer(ILogger<SimpleMessageConsumer> logger)
     : IConsumer<SimpleMessageCommand>
 {
     public Task ConsumeAsync(Message<SimpleMessageCommand> message, CancellationToken cancellationToken)

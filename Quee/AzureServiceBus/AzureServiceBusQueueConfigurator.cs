@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Logging;
 using Quee.Extensions;
 using Quee.Interfaces;
 using Quee.QueueOptions;
@@ -28,31 +27,44 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
+    public IAzureServiceBusQueueConfigurator AddQueueConsumerOptions(string queueName, AzureServiceBusConsumerOptions options)
+    {
+        // Always override the provided value to enforce the associated queue name
+        options.TargetQueue = queueName;
+        services.AddTransient(_ => options);
+
+        return this;
+    }
+
+    /// <inheritdoc />
     public IQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        return AddConsumer<TMessage, TConsumer>(queueName, new());
+        return AddConsumer<TMessage, TConsumer>(queueName, null);
     }
 
     /// <inheritdoc />
-    public IAzureServiceBusQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions options)
+    public IAzureServiceBusQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions? options)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
+        // Remove all the previously registered consumers that might exist in the DI container
         services.RemoveAll<IConsumer<TMessage>>();
         services.RemoveAll<AzureServiceBusQueueConsumer<TMessage>>();
 
+        // If options were provided, register them
+        if (options != null)
+            services.AddTransient(_ => options);
+
+        // Add the consumer from the user and a hosted service to invoke the consumer
         services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
         {
             return new AzureServiceBusQueueConsumer<TMessage>(
                 connectionString,
                 queueName,
-                new AzureServiceBusConsumerOptions(),
-                provider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>(),
-                provider.GetRequiredService<IServiceScopeFactory>(),
-                provider.GetService<IQueueEventTrackingService>()); // Service optional depending on if dev registered it for use
+                provider);
         });
 
         return this;
@@ -80,11 +92,11 @@ internal sealed class AzureServiceBusQueueConfigurator
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        return AddSenderAndConsumer<TMessage, TConsumer>(queueName, new AzureServiceBusConsumerOptions(), retries);
+        return AddSenderAndConsumer<TMessage, TConsumer>(queueName, null, retries);
     }
 
     /// <inheritdoc />
-    public IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions options, params TimeSpan[] retries)
+    public IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions? options, params TimeSpan[] retries)
     where TMessage : class
     where TConsumer : class, IConsumer<TMessage>
     {

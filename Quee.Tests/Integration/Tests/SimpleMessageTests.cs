@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.Interfaces;
-using Quee.Tests.Queues.Commands;
+using Quee.WebApp.Queues.Commands;
 
 namespace Quee.Tests.Integration.Tests;
 

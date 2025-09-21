@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Quee.Extensions;
-using Quee.Tests.Queues.Commands;
-using Quee.Tests.Queues.Consumers;
+using Quee.WebApp.Queues.Commands;
+using Quee.WebApp.Queues.Consumers;
 
 namespace Quee.Tests.Integration.Setup;
 
