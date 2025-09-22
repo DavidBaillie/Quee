@@ -19,12 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="NUnit.Framework" />
+    <ProjectReference Include="..\..\src\Quee.WebApp\Quee.WebApp.csproj" />
+    <ProjectReference Include="..\..\src\Quee\Quee.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Quee\Quee.csproj" />
-    <ProjectReference Include="..\Quee.WebApp\Quee.WebApp.csproj" />
+    <Using Include="NUnit.Framework" />
   </ItemGroup>
 
 </Project>
