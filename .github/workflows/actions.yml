@@ -22,9 +22,9 @@ jobs:
         run: dotnet restore
 
       - name: Build Quee
-        run: dotnet build ./Quee -c Release
+        run: dotnet build ./src/Quee -c Release
 
       - name: Build and run Quee.Tests
         run: |
-          dotnet build ./Quee.Tests -c Release
-          dotnet test ./Quee.Tests -c Release --results-directory ./TestResults
+          dotnet build ./test/Quee.Tests -c Release
+          dotnet test ./test/Quee.Tests -c Release --results-directory ./TestResults
