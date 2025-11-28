@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Quee.Interfaces;
+using Quee.Common.Interfaces;
 using Quee.WebApp.Queues.Commands;
 
 namespace Quee.Tests.Integration.Tests;
