@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Quee.AzureServiceBus.AzureServiceBus;
-using Quee.AzureServiceBus.Interfaces;
+using Quee.AzureServiceBus.Models;
+using Quee.AzureServiceBus.Services;
 
-namespace Quee.AzureServiceBus.Extensions;
+#pragma warning disable IDE0130 // Namespace does not match folder structure
+namespace Quee;
 
 public static class RegistrationExtensions
 {

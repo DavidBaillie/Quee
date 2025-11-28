@@ -19,7 +19,7 @@ internal static class AzureServiceBusQueueManager
         {
             var client = new ServiceBusAdministrationClient(connectionString);
 
-            if (!await client.QueueExistsAsync(queueName))
+            if (!await client.QueueExistsAsync(queueName, cancellationToken))
             {
                 await client.CreateQueueAsync(queueName, cancellationToken);
             }

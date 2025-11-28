@@ -1,12 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Quee.AzureServiceBus.Interfaces;
-using Quee.AzureServiceBus.Services;
-using Quee.Common.Extensions;
-using Quee.Common.Interfaces;
-using Quee.Common.Models;
 
-namespace Quee.AzureServiceBus.AzureServiceBus;
+namespace Quee.AzureServiceBus.Services;
 
 /// <summary>
 /// Handles setting up the senders and consumers for queuing messages into the Service Bus
@@ -25,11 +20,11 @@ internal sealed class AzureServiceBusQueueConfigurator
         this.connectionString = connectionString;
 
         services.RemoveAll<QueueRetryOptions>();
-        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = true });
+        services.AddTransient(_ => new QueueRetryOptions() { AllowRetries = true });
     }
 
     /// <inheritdoc />
-    public IAzureServiceBusQueueConfigurator AddQueueConsumerOptions(string queueName, AzureServiceBusConsumerOptions options)
+    public IAzureServiceBusQueueConfigurator AddQueueConsumerOptions(string queueName, ConsumerOptions options)
     {
         // Always override the provided value to enforce the associated queue name
         options.TargetQueue = queueName;
@@ -47,7 +42,7 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IAzureServiceBusQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions? options)
+    public IAzureServiceBusQueueConfigurator AddConsumer<TMessage, TConsumer>(string queueName, ConsumerOptions? options)
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
@@ -98,7 +93,7 @@ internal sealed class AzureServiceBusQueueConfigurator
     }
 
     /// <inheritdoc />
-    public IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, AzureServiceBusConsumerOptions? options, params TimeSpan[] retries)
+    public IAzureServiceBusQueueConfigurator AddSenderAndConsumer<TMessage, TConsumer>(string queueName, ConsumerOptions? options, params TimeSpan[] retries)
     where TMessage : class
     where TConsumer : class, IConsumer<TMessage>
     {
@@ -118,7 +113,7 @@ internal sealed class AzureServiceBusQueueConfigurator
     public IQueueConfigurator DisableRetryPolicy()
     {
         services.RemoveAll<QueueRetryOptions>();
-        services.AddTransient((_) => new QueueRetryOptions() { AllowRetries = false });
+        services.AddTransient(_ => new QueueRetryOptions() { AllowRetries = false });
 
         return this;
     }

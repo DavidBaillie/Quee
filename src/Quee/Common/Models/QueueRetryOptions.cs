@@ -9,3 +9,4 @@ public class QueueRetryOptions
     /// </summary>
     public bool AllowRetries { get; set; } = true;
 }
+ 

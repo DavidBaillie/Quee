@@ -1,4 +1,4 @@
-﻿namespace Quee.AzureServiceBus.AzureServiceBus;
+﻿namespace Quee.AzureServiceBus.Models;
 
 /// <summary>
 /// Defines the message wrapper as sent into the Azure Service Bus when messages are passed

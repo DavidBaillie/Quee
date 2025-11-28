@@ -3,20 +3,18 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Quee.AzureServiceBus.AzureServiceBus;
-using Quee.Common.Interfaces;
-using Quee.Messages;
+using Quee.AzureServiceBus.Models;
 using System.Text;
 
 namespace Quee.AzureServiceBus.Services;
 
 internal class AzureServiceBusQueueConsumer<TMessage>
-    : IHostedService, IDisposable
+    : IHostedService, IAsyncDisposable
     where TMessage : class
 {
     private readonly string connectionString;
     private readonly string queueName;
-    private readonly AzureServiceBusConsumerOptions options;
+    private readonly ConsumerOptions options;
     private readonly ILogger<AzureServiceBusQueueConsumer<TMessage>> logger;
     private readonly IServiceScopeFactory serviceScopeFactory;
     private readonly IQueueEventTrackingService? trackingService;
@@ -43,10 +41,10 @@ internal class AzureServiceBusQueueConsumer<TMessage>
         logger = serviceProvider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>();
         serviceScopeFactory = serviceProvider.GetRequiredService<IServiceScopeFactory>();
         trackingService = serviceProvider.GetService<IQueueEventTrackingService>();
-        options = serviceProvider.GetServices<AzureServiceBusConsumerOptions>()
+        options = serviceProvider.GetServices<ConsumerOptions>()
             .FirstOrDefault(
                 x => x.TargetQueue == queueName,
-                defaultValue: new AzureServiceBusConsumerOptions()
+                defaultValue: new ConsumerOptions()
             );
 
         // Build the client for connecting to the service bus
@@ -213,8 +211,10 @@ internal class AzureServiceBusQueueConsumer<TMessage>
                     }));
 
             // Recreate the message and queue it to be processed after the developer provided span of time
-            var busMessage = new ServiceBusMessage(body);
-            busMessage.ScheduledEnqueueTime = DateTime.UtcNow + message.RetryDelays[message.RetryNumber];
+            var busMessage = new ServiceBusMessage(body)
+            {
+                ScheduledEnqueueTime = DateTime.UtcNow + message.RetryDelays[message.RetryNumber]
+            };
 
             await serviceBusSender.SendMessageAsync(busMessage, cancellationToken);
         }
@@ -240,14 +240,11 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        Task.Run(async () =>
-        {
-            await serviceBusProcessor.DisposeAsync();
-            await serviceBusSender.DisposeAsync();
-            await serviceBusClient.DisposeAsync();
-        }).Wait();
+        await serviceBusProcessor.DisposeAsync().ConfigureAwait(false);
+        await serviceBusSender.DisposeAsync().ConfigureAwait(false);
+        await serviceBusClient.DisposeAsync().ConfigureAwait(false);
 
         cancellationTokenSource?.Dispose();
     }

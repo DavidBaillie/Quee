@@ -1,9 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Newtonsoft.Json;
-using Quee.AzureServiceBus.AzureServiceBus;
-using Quee.Common.Interfaces;
-using Quee.Exceptions;
-using Quee.QueueOptions;
+using Quee.AzureServiceBus.Models;
 using System.Text;
 
 namespace Quee.AzureServiceBus.Services;
@@ -14,7 +11,7 @@ namespace Quee.AzureServiceBus.Services;
 /// </summary>
 /// <typeparam name="TMessage">Message to be sent into the queue</typeparam>
 internal class AzureServiceBusQueueSender<TMessage>
-    : IDisposable, IQueueSender<TMessage>
+    : IAsyncDisposable, IQueueSender<TMessage>
     where TMessage : class
 {
     private readonly string connectionString;
@@ -96,9 +93,9 @@ internal class AzureServiceBusQueueSender<TMessage>
     }
 
     /// <inheritdoc />
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        serviceBusSender.DisposeAsync().GetAwaiter().GetResult();
-        serviceBusClient.DisposeAsync().GetAwaiter().GetResult();
+        await serviceBusSender.DisposeAsync().ConfigureAwait(false);
+        await serviceBusClient.DisposeAsync().ConfigureAwait(false);
     }
 }
