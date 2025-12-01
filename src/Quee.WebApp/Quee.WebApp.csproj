@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Quee.AzureServiceBus\Quee.AzureServiceBus.csproj" />
     <ProjectReference Include="..\Quee\Quee.csproj" />
   </ItemGroup>
 

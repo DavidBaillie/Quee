@@ -5,7 +5,8 @@ namespace Quee.WebApp.Queues.Consumers;
 /// <summary>
 /// Generic consumer that delays completion for a set number of milliseconds to simulate some asyncronous activity
 /// </summary>
-public class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
+public class LongRunningTaskConsumer(ILogger<LongRunningTaskConsumer> logger)
+    : IConsumer<LongRunningTaskCommand>
 {
     /// <summary>
     /// Consumes the delay message, causing a delay of <see cref="LongRunningTaskCommand.milisecondsToWait"/> milliseconds
@@ -14,7 +15,8 @@ public class LongRunningTaskConsumer : IConsumer<LongRunningTaskCommand>
     /// <param name="cancellationToken">Process token</param>
     public async Task ConsumeAsync(Message<LongRunningTaskCommand> message, CancellationToken cancellationToken)
     {
-        await Task.Delay(message.Payload.milisecondsToWait);
+        await Task.Delay(message.Payload.milisecondsToWait, cancellationToken);
+        logger.LogInformation("Completed long running task");
     }
 
     /// <summary>

@@ -15,20 +15,50 @@ public class Program
         //    options
         //        .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>(SimpleQueueName, TimeSpan.FromSeconds(1))
         //        .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(LongRunningQueueName, TimeSpan.FromSeconds(1));
+            
         //    options
-        //        .AddQueueConsumerOptions(SimpleQueueName, new AzureServiceBus.AzureServiceBusConsumerOptions()
+        //        .AddQueueConsumerOptions(SimpleQueueName, new ConsumerOptions()
         //        {
         //            PrefetchLimit = 10,
-        //            ConcurrencyLimit = 1
+        //            ConcurrencyLimit = 1,
         //        })
-        //        .AddQueueConsumerOptions(LongRunningQueueName, new AzureServiceBus.AzureServiceBusConsumerOptions()
+        //        .AddQueueConsumerOptions(LongRunningQueueName, new ConsumerOptions()
         //        {
-        //            ConcurrencyLimit = 10
+        //            PrefetchLimit = 10,
+        //            ConcurrencyLimit = 1,
         //        });
         //});
 
         var app = builder.Build();
         app.UseHttpsRedirection();
+        //app.MapPost(
+        //    "/simple-message", async (
+        //    [FromServices] Quee.IQueueSender<SimpleMessageCommand> sender,
+        //    [FromServices] ILogger<SimpleMessageCommand> logger,
+        //    [FromQuery] int messageCount,
+        //    [FromQuery] string message,
+        //    CancellationToken cancellationToken) =>
+        //{
+        //    for (int i = 0; i < messageCount; i++)
+        //    {
+        //        logger.LogInformation("Sent simple message to quee");
+        //        await sender.SendMessageAsync(new SimpleMessageCommand(Guid.NewGuid(), message), cancellationToken);
+        //    }
+        //});
+        //app.MapPost(
+        //    "/long-running", async (
+        //    [FromServices] Quee.IQueueSender<LongRunningTaskCommand> sender,
+        //    [FromServices] ILogger<LongRunningTaskCommand> logger,
+        //    [FromQuery] int messageCount,
+        //    [FromQuery] int delay,
+        //    CancellationToken cancellationToken) =>
+        //    {
+        //        for (int i = 0; i < messageCount; i++)
+        //        {
+        //            logger.LogInformation("Sent long task to quee");
+        //            await sender.SendMessageAsync(new LongRunningTaskCommand(delay), cancellationToken);
+        //        }
+        //    });
         app.MapGet("/", () => TypedResults.Ok("Running"));
         app.Run();
     }
