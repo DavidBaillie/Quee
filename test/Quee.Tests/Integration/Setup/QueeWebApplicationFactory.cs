@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Quee.Common.Extensions;
 using Quee.WebApp.Queues.Commands;
 using Quee.WebApp.Queues.Consumers;
 

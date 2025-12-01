@@ -46,16 +46,15 @@ internal sealed class AzureServiceBusQueueConfigurator
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        // Remove all the previously registered consumers that might exist in the DI container
-        services.RemoveAll<IConsumer<TMessage>>();
-        services.RemoveAll<AzureServiceBusQueueConsumer<TMessage>>();
+        if (!QueueRegistrations.Consumers.Add(queueName))
+            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another consumer registered for this queue.");
 
         // If options were provided, register them
         if (options != null)
-            services.AddTransient(_ => options);
+            services.TryAddTransient(_ => options);
 
         // Add the consumer from the user and a hosted service to invoke the consumer
-        services.AddTransient<IConsumer<TMessage>, TConsumer>();
+        services.TryAddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
         {
             return new AzureServiceBusQueueConsumer<TMessage>(
@@ -70,9 +69,11 @@ internal sealed class AzureServiceBusQueueConfigurator
     /// <inheritdoc />
     public IQueueConfigurator AddSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
     {
-        services.RemoveAll<IConsumer<TMessage>>();
+        // Only allow a sender with the name to be registered once
+        if (!QueueRegistrations.Senders.Add(queueName))
+            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another Queue Sender with a matching name.");
 
-        services.AddScoped<IQueueSender<TMessage>>(provider =>
+        services.TryAddScoped<IQueueSender<TMessage>>(provider =>
         {
             return new AzureServiceBusQueueSender<TMessage>(
                 connectionString,

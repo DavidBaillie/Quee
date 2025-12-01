@@ -1,6 +1,4 @@
-﻿using Quee.Common.Interfaces;
-using Quee.Common.Messages;
-using Quee.WebApp.Queues.Commands;
+﻿using Quee.WebApp.Queues.Commands;
 
 namespace Quee.WebApp.Queues.Consumers;
 

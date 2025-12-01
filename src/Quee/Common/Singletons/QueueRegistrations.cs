@@ -4,7 +4,7 @@ namespace Quee;
 /// <summary>
 /// Singleton handles tracking all senders and receivers registered by the current runtime during program startup.
 /// </summary>
-internal static class QueueRegistrations
+public static class QueueRegistrations
 {
     /// <summary>
     /// Names of all the queues that have senders registered in the runtime

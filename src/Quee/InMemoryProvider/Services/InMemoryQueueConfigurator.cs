@@ -38,8 +38,8 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
             throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another Queue Sender with a matching name.");
 
         AddChannelForMessage<TMessage>();
-
-        services.AddTransient<IQueueSender<TMessage>>((provider) =>
+        
+        services.TryAddTransient<IQueueSender<TMessage>>((provider) =>
         {
             return new InMemoryQueueSender<TMessage>(
                 queueName,
@@ -58,11 +58,11 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
         where TMessage : class
     {
         if (!QueueRegistrations.Consumers.Add(queueName))
-            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another consumer with ");
+            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another consumer registered for this queue.");
 
         AddChannelForMessage<TMessage>();
 
-        services.AddScoped<IConsumer<TMessage>, TConsumer>();
+        services.TryAddScoped<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService((provider) =>
         {
             return new InMemoryQueueConsumer<TMessage>(
@@ -93,7 +93,7 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
     private void AddChannelForMessage<TMessage>() 
         where TMessage : class
     {
-        services.AddSingleton(
+        services.TryAddSingleton(
             _ => Channel.CreateUnbounded<InMemoryMessage<TMessage>>(
                 new UnboundedChannelOptions()
                 {
