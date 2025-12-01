@@ -7,22 +7,33 @@ namespace Quee.Tests.Integration.Setup;
 
 internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
 {
+    /// <summary>
+    /// Because the <see cref="IWebHostBuilder.ConfigureServices(Action{Microsoft.Extensions.DependencyInjection.IServiceCollection})"/> method can called 
+    /// multiple times during parallel runs, this boolean controls for having the queues registered exactly once when the first <see cref="QueeWebApplicationFactory"/> is started.
+    /// </summary>
+    private static bool hasConfiguredQuee = false;
+
     /// <inheritdoc />
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         base.ConfigureWebHost(builder);
 
         // Customize DI container
-        builder.ConfigureServices(services =>
+        if (!hasConfiguredQuee)
         {
-            // Setup some queues to process
-            services.QueeInMemory(options =>
+            hasConfiguredQuee = true;
+
+            builder.ConfigureServices(services =>
             {
-                options.DisableRetryPolicy()
-                    .AddMessageTracker()
-                    .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(nameof(LongRunningTaskCommand))
-                    .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>(nameof(SimpleMessageCommand));
+                // Setup some queues to process
+                services.QueeInMemory(options =>
+                {
+                    options.DisableRetryPolicy()
+                        .AddMessageTracker()
+                        .AddSenderAndConsumer<LongRunningTaskCommand, LongRunningTaskConsumer>(nameof(LongRunningTaskCommand))
+                        .AddSenderAndConsumer<SimpleMessageCommand, SimpleMessageConsumer>(nameof(SimpleMessageCommand));
+                });
             });
-        });
+        }
     }
 }
