@@ -11,5 +11,5 @@ public record LongRunningTaskCommand(int millisecondsToWait)
     /// Used to identify the message when searching amoung duplicates of the message in the queue
     /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
-    public int milisecondsToWait { get; set; } = millisecondsToWait;
+    public int MilisecondsToWait { get; set; } = millisecondsToWait;
 }

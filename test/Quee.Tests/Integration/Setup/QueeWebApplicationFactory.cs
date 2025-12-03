@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Quee.Extensions;
 using Quee.WebApp.Queues.Commands;
 using Quee.WebApp.Queues.Consumers;
 
@@ -13,7 +12,6 @@ internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
     {
         base.ConfigureWebHost(builder);
 
-        // Customize DI container
         builder.ConfigureServices(services =>
         {
             // Setup some queues to process
