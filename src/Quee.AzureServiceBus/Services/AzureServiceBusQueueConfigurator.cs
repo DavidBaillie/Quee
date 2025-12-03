@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Collections.Concurrent;
 
 namespace Quee.AzureServiceBus.Services;
 
@@ -13,6 +14,18 @@ internal sealed class AzureServiceBusQueueConfigurator
 {
     private readonly IServiceCollection services;
     private readonly string connectionString;
+
+    private readonly ConcurrentDictionary<string, byte> registrationTracker = new();
+
+    /// <summary>
+    /// Takes the DI Container instance and combines it with the type information of the provided type. 
+    /// Allows for a unique value for each registered type per possible container. 
+    /// </summary>
+    /// <param name="services">Services to add the Type to</param>
+    /// <param name="type">Type that might be added to the container</param>
+    /// <returns>unique string for the type that would be inserted into the container.</returns>
+    private static string GetTypeKey(IServiceCollection services, Type type)
+        => $"{services.GetHashCode()}:{type.FullName}";
 
     public AzureServiceBusQueueConfigurator(IServiceCollection services, string connectionString)
     {
@@ -46,15 +59,16 @@ internal sealed class AzureServiceBusQueueConfigurator
         where TMessage : class
         where TConsumer : class, IConsumer<TMessage>
     {
-        if (!QueueRegistrations.Consumers.Add(queueName))
-            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another consumer registered for this queue.");
+        // DI Container already has a sender registered for this Message type
+        if (!registrationTracker.TryAdd(GetTypeKey(services, typeof(IConsumer<TMessage>)), 0))
+            return this;
 
         // If options were provided, register them
         if (options != null)
-            services.TryAddTransient(_ => options);
+            services.AddTransient(_ => options);
 
         // Add the consumer from the user and a hosted service to invoke the consumer
-        services.TryAddTransient<IConsumer<TMessage>, TConsumer>();
+        services.AddTransient<IConsumer<TMessage>, TConsumer>();
         services.AddHostedService(provider =>
         {
             return new AzureServiceBusQueueConsumer<TMessage>(
@@ -69,11 +83,11 @@ internal sealed class AzureServiceBusQueueConfigurator
     /// <inheritdoc />
     public IQueueConfigurator AddSender<TMessage>(string queueName, params TimeSpan[] retries) where TMessage : class
     {
-        // Only allow a sender with the name to be registered once
-        if (!QueueRegistrations.Senders.Add(queueName))
-            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another Queue Sender with a matching name.");
+        // DI Container already has a sender registered for this Message type
+        if (!registrationTracker.TryAdd(GetTypeKey(services, typeof(IQueueSender<TMessage>)), 0))
+            return this;
 
-        services.TryAddScoped<IQueueSender<TMessage>>(provider =>
+        services.AddScoped<IQueueSender<TMessage>>(provider =>
         {
             return new AzureServiceBusQueueSender<TMessage>(
                 connectionString,
@@ -82,6 +96,7 @@ internal sealed class AzureServiceBusQueueConfigurator
                 provider.GetService<IQueueEventTrackingService>(),
                 retries);
         });
+
         return this;
     }
 
