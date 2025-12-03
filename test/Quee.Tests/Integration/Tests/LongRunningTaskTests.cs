@@ -1,0 +1,75 @@
+﻿using Microsoft.Extensions.DependencyInjection;
+using Quee.WebApp.Queues.Commands;
+
+namespace Quee.Tests.Integration.Tests;
+
+
+internal class LongRunningTaskTests : IntegrationTestBase
+{
+    [Test]
+    public async Task WhenQueueLongRunningTaskWillBeConsumed()
+    {
+        // Arrange
+        using var scope = CreateScope();
+        var monitor = scope.ServiceProvider.GetRequiredService<IQueueMonitor>();
+
+        var sourceMessage = new LongRunningTaskCommand(250);
+        await scope.ServiceProvider.GetRequiredService<IQueueSender<LongRunningTaskCommand>>()
+            .SendMessageAsync(sourceMessage, CancellationToken.None);
+
+
+        // Assert
+        var sentMessage = await monitor.WaitForMessageToSend<LongRunningTaskCommand>(
+            nameof(LongRunningTaskCommand),
+            TimeSpan.FromSeconds(1),
+            CancellationToken.None,
+            x => x.Id == sourceMessage.Id);
+        Assert.That(sentMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was requested to send into the Queue but no message was recorded as being sent.", sourceMessage);
+
+        var consumedMessage = await monitor.WaitForMessageToReceive<LongRunningTaskCommand>(
+            nameof(LongRunningTaskCommand),
+            TimeSpan.FromSeconds(10),
+            CancellationToken.None,
+            x => x.Id == sourceMessage.Id);
+        Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was sent into the queue, but was never consumed.", sourceMessage);
+
+        var faultMessage = await monitor.WaitForMessageToFault<LongRunningTaskCommand>(
+            nameof(LongRunningTaskCommand),
+            TimeSpan.FromMilliseconds(100),
+            CancellationToken.None,
+            x => x.Id == sourceMessage.Id);
+        Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was found in the fault queue when it should have been consumed.", sourceMessage);
+    }
+
+    [Test]
+    public async Task WhenQueueManyLongRunningTaskWillBeConsumed()
+    {
+        // Arrange
+        const int messageCount = 100;
+
+        using var scope = CreateScope();
+        var monitor = scope.ServiceProvider.GetRequiredService<IQueueMonitor>();
+
+        var sentMessagesIds = Enumerable.Range(0, messageCount)
+            .Select(x =>
+            {
+                var message = new LongRunningTaskCommand(100);
+                scope.ServiceProvider.GetRequiredService<IQueueSender<LongRunningTaskCommand>>()
+                    .SendMessageAsync(
+                        message,
+                        CancellationToken.None).Wait();
+
+                return message.Id;
+            }).ToHashSet();
+
+        foreach (var id in sentMessagesIds)
+        {
+            var consumedMessage = await monitor.WaitForMessageToReceive<LongRunningTaskCommand>(
+                nameof(LongRunningTaskCommand),
+                TimeSpan.FromSeconds(30),
+                CancellationToken.None,
+                x => x.Id == id);
+            Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was sent into the queue with Id {id}, but was never consumed.");
+        }
+    }
+}
