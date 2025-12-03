@@ -18,9 +18,9 @@ internal sealed class QueueEventTrackingService
     /// <param name="EnqueueTime">When the message was recorded in the state tracker</param>
     private record EnqueueEvent(object Message, DateTime EnqueueTime);
 
-    private readonly ConcurrentDictionary<string, Queue<EnqueueEvent>> sentMessages = new();
-    private readonly ConcurrentDictionary<string, Queue<EnqueueEvent>> receivedMessages = new();
-    private readonly ConcurrentDictionary<string, Queue<EnqueueEvent>> faultedMessages = new();
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<EnqueueEvent>> sentMessages = new();
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<EnqueueEvent>> receivedMessages = new();
+    private readonly ConcurrentDictionary<string, ConcurrentQueue<EnqueueEvent>> faultedMessages = new();
 
     private readonly int maximumMessagesPerQueue;
 
@@ -44,14 +44,14 @@ internal sealed class QueueEventTrackingService
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         // Make sure the dictionary element exists
-        var queue = sentMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
+        var queue = sentMessages.GetOrAdd(queueName, (_) => new ConcurrentQueue<EnqueueEvent>());
 
         // Save the message with a timestamp
         queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
         if (queue.Count > maximumMessagesPerQueue)
-            queue.Dequeue();
+            _ = queue.TryDequeue(out var _);
     }
 
     /// <inheritdoc />
@@ -62,14 +62,14 @@ internal sealed class QueueEventTrackingService
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         // Make sure the dictionary element exists
-        var queue = receivedMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
+        var queue = receivedMessages.GetOrAdd(queueName, (_) => new ConcurrentQueue<EnqueueEvent>());
 
         // Save the message with a timestamp
         queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
         if (queue.Count > maximumMessagesPerQueue)
-            queue.Dequeue();
+            _ = queue.TryDequeue(out var _);
     }
 
     /// <inheritdoc />
@@ -80,14 +80,14 @@ internal sealed class QueueEventTrackingService
         ArgumentNullException.ThrowIfNull(message, nameof(message));
 
         // Make sure the dictionary element exists
-        var queue = faultedMessages.GetOrAdd(queueName, (_) => new Queue<EnqueueEvent>());
+        var queue = faultedMessages.GetOrAdd(queueName, (_) => new ConcurrentQueue<EnqueueEvent>());
 
         // Save the message with a timestamp
         queue.Enqueue(new EnqueueEvent(message, DateTime.UtcNow));
 
         // Check for too many messages
         if (queue.Count > maximumMessagesPerQueue)
-            queue.Dequeue();
+            _ = queue.TryDequeue(out var _);
     }
 
     /// <inheritdoc />

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 using System.Threading.Channels;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
@@ -13,6 +14,17 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
         : IInMemoryQueueConfigurator
 {
     private readonly bool allowRetries = true;
+    private readonly ConcurrentDictionary<string, byte> registrationTracker = new();
+
+    /// <summary>
+    /// Takes the DI Container instance and combines it with the type information of the provided type. 
+    /// Allows for a unique value for each registered type per possible container. 
+    /// </summary>
+    /// <param name="services">Services to add the Type to</param>
+    /// <param name="type">Type that might be added to the container</param>
+    /// <returns>unique string for the type that would be inserted into the container.</returns>
+    private static string GetTypeKey(IServiceCollection services, Type type)
+        => $"{services.GetHashCode()}:{type.FullName}";
 
     /// <inheritdoc />
     public IQueueConfigurator DisableRetryPolicy()
@@ -33,9 +45,9 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
     public IQueueConfigurator AddSender<TMessage>(string queueName, params TimeSpan[] retries)
         where TMessage : class
     {
-        // Only allow a sender with the name to be registered once
-        if (!QueueRegistrations.Senders.Add(queueName))
-            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another Queue Sender with a matching name.");
+        // DI Container already has a sender registered for this Message type
+        if (!registrationTracker.TryAdd(GetTypeKey(services, typeof(IQueueSender<TMessage>)), 0))
+            return this;
 
         AddChannelForMessage<TMessage>();
         
@@ -57,8 +69,9 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
         where TConsumer : class, IConsumer<TMessage>
         where TMessage : class
     {
-        if (!QueueRegistrations.Consumers.Add(queueName))
-            throw new QueueRegistrationException($"Cannot register queue {queueName} because there is already another consumer registered for this queue.");
+        // DI Container already has a consumer registered for this Message type
+        if (!registrationTracker.TryAdd(GetTypeKey(services, typeof(IConsumer<TMessage>)), 0))
+            return this;
 
         AddChannelForMessage<TMessage>();
 
@@ -93,6 +106,7 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
     private void AddChannelForMessage<TMessage>() 
         where TMessage : class
     {
+        // Adds the singleton for the communication channel once to the DI container
         services.TryAddSingleton(
             _ => Channel.CreateUnbounded<InMemoryMessage<TMessage>>(
                 new UnboundedChannelOptions()

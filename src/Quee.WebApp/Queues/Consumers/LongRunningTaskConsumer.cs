@@ -9,13 +9,13 @@ public class LongRunningTaskConsumer(ILogger<LongRunningTaskConsumer> logger)
     : IConsumer<LongRunningTaskCommand>
 {
     /// <summary>
-    /// Consumes the delay message, causing a delay of <see cref="LongRunningTaskCommand.milisecondsToWait"/> milliseconds
+    /// Consumes the delay message, causing a delay of <see cref="LongRunningTaskCommand.MilisecondsToWait"/> milliseconds
     /// </summary>
     /// <param name="message">Message with delay time</param>
     /// <param name="cancellationToken">Process token</param>
     public async Task ConsumeAsync(Message<LongRunningTaskCommand> message, CancellationToken cancellationToken)
     {
-        await Task.Delay(message.Payload.milisecondsToWait, cancellationToken);
+        await Task.Delay(message.Payload.MilisecondsToWait, cancellationToken);
         logger.LogInformation("Completed long running task");
     }
 
