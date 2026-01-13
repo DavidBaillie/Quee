@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Quee.AzureServiceBus.Models;
 using Quee.AzureServiceBus.Services;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure
@@ -17,9 +16,10 @@ public static class RegistrationExtensions
     public static IServiceCollection QueeWithAzureServiceBus(
         this IServiceCollection services,
         string connectionString,
+        bool allowQueueManagement,
         Action<IAzureServiceBusQueueConfigurator>? configuration = null)
     {
-        IAzureServiceBusQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString);
+        IAzureServiceBusQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString, allowQueueManagement);
         configuration?.Invoke(configurator);
 
         return services;

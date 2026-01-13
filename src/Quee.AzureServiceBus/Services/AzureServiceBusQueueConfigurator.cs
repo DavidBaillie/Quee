@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Quee.AzureServiceBus.Interfaces;
 using System.Collections.Concurrent;
 
 namespace Quee.AzureServiceBus.Services;
@@ -27,13 +30,23 @@ internal sealed class AzureServiceBusQueueConfigurator
     private static string GetTypeKey(IServiceCollection services, Type type)
         => $"{services.GetHashCode()}:{type.FullName}";
 
-    public AzureServiceBusQueueConfigurator(IServiceCollection services, string connectionString)
+    public AzureServiceBusQueueConfigurator(IServiceCollection services, string connectionString, bool allowAdminManagement)
     {
         this.services = services;
         this.connectionString = connectionString;
 
         services.RemoveAll<QueueRetryOptions>();
         services.AddTransient(_ => new QueueRetryOptions() { AllowRetries = true });
+
+        // Register the Client as a singleton for all threads/tasks to share as a common pooled resource
+        services.TryAddSingleton(new ServiceBusClient(connectionString));
+
+        // Register the queue sender manager as a shared resource that allows a single sender to be shared across multiple threads
+        services.TryAddSingleton<IAzureServiceBusQueueSenderManager, AzureServiceBusQueueSenderManager>();
+
+        // If the runtime is allow to manage queues, enable the admin client for use
+        if (allowAdminManagement)
+            services.TryAddSingleton(new ServiceBusAdministrationClient(connectionString));
     }
 
     /// <inheritdoc />
@@ -72,7 +85,6 @@ internal sealed class AzureServiceBusQueueConfigurator
         services.AddHostedService(provider =>
         {
             return new AzureServiceBusQueueConsumer<TMessage>(
-                connectionString,
                 queueName,
                 provider);
         });
@@ -90,7 +102,7 @@ internal sealed class AzureServiceBusQueueConfigurator
         services.AddScoped<IQueueSender<TMessage>>(provider =>
         {
             return new AzureServiceBusQueueSender<TMessage>(
-                connectionString,
+                provider.GetRequiredService<IAzureServiceBusQueueSenderManager>(),
                 queueName,
                 provider.GetRequiredService<QueueRetryOptions>(),
                 provider.GetService<IQueueEventTrackingService>(),
