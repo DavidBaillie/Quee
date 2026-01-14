@@ -10,11 +10,21 @@ namespace Quee;
 /// <summary>
 /// Handles configuration for the in-memory queue based services
 /// </summary>
-internal class InMemoryQueueConfigurator(IServiceCollection services)
+internal class InMemoryQueueConfigurator
         : IInMemoryQueueConfigurator
 {
+    private readonly IServiceCollection services;
+
     private readonly bool allowRetries = true;
     private readonly ConcurrentDictionary<string, byte> registrationTracker = new();
+
+    public InMemoryQueueConfigurator(IServiceCollection services)
+    {
+        this.services = services;
+
+        services.RemoveAll<QueueRetryOptions>();
+        services.AddTransient(_ => new QueueRetryOptions() { AllowRetries = true });
+    }
 
     /// <summary>
     /// Takes the DI Container instance and combines it with the type information of the provided type. 
@@ -50,7 +60,7 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
             return this;
 
         AddChannelForMessage<TMessage>();
-        
+
         services.TryAddTransient<IQueueSender<TMessage>>((provider) =>
         {
             return new InMemoryQueueSender<TMessage>(
@@ -58,7 +68,7 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
                 provider.GetRequiredService<QueueRetryOptions>(),
                 allowRetries ? retries : [], // Optionally disable the retries provided depending on the disable invocation
                 provider.GetRequiredService<Channel<InMemoryMessage<TMessage>>>(),
-                provider.GetService<IQueueEventTrackingService>()); 
+                provider.GetService<IQueueEventTrackingService>());
         });
 
         return this;
@@ -103,7 +113,7 @@ internal class InMemoryQueueConfigurator(IServiceCollection services)
     /// Registers a <see cref="Channel"/> for the message type <typeparamref name="TMessage"/> to use when reading or writing
     /// </summary>
     /// <typeparam name="TMessage">Type of message for the channel to send/receive</typeparam>
-    private void AddChannelForMessage<TMessage>() 
+    private void AddChannelForMessage<TMessage>()
         where TMessage : class
     {
         // Adds the singleton for the communication channel once to the DI container

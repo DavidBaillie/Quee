@@ -1,5 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
 using Newtonsoft.Json;
+using Quee.AzureServiceBus.Interfaces;
 using Quee.AzureServiceBus.Models;
 using System.Text;
 
@@ -11,20 +12,15 @@ namespace Quee.AzureServiceBus.Services;
 /// </summary>
 /// <typeparam name="TMessage">Message to be sent into the queue</typeparam>
 internal class AzureServiceBusQueueSender<TMessage>
-    : IAsyncDisposable, IQueueSender<TMessage>
+    : IQueueSender<TMessage>
     where TMessage : class
 {
-    private readonly string connectionString;
-    private readonly string queueName;
-    private readonly ServiceBusClient serviceBusClient;
     private readonly ServiceBusSender serviceBusSender;
-    private readonly TimeSpan[] retrySpans;
+    private readonly string queueName;
+    private readonly QueueRetryOptions messageRetryOptions;
+    private readonly IQueueEventTrackingService? queueTrackingService;
+    private readonly TimeSpan[] messageRetryDelays;
 
-    private readonly IQueueEventTrackingService? trackingService;
-    private readonly QueueRetryOptions retryOptions;
-
-    private bool hasCheckedQueueExists = false;
-    private bool queueExists = false;
 
     /// <summary>
     /// Construct a connection to the Service Bus via the provided connection string and for the given queue
@@ -33,20 +29,17 @@ internal class AzureServiceBusQueueSender<TMessage>
     /// <param name="queueName">Name of the queue to submit to</param>
     /// <param name="retrySpans">Timespans between each allowed retry</param>
     internal AzureServiceBusQueueSender(
-        string connectionString,
+        IAzureServiceBusQueueSenderManager queueSenderManager,
         string queueName,
         QueueRetryOptions options,
         IQueueEventTrackingService? trackingService = null,
         params TimeSpan[] retrySpans)
     {
-        this.connectionString = connectionString;
         this.queueName = queueName;
-        this.trackingService = trackingService;
-        this.retryOptions = options;
-        this.retrySpans = retrySpans;
-
-        serviceBusClient = new ServiceBusClient(connectionString);
-        serviceBusSender = serviceBusClient.CreateSender(queueName);
+        serviceBusSender = queueSenderManager.CreateSender(queueName);
+        queueTrackingService = trackingService;
+        messageRetryOptions = options;
+        messageRetryDelays = retrySpans;
     }
 
     /// <summary>
@@ -59,27 +52,13 @@ internal class AzureServiceBusQueueSender<TMessage>
         CancellationToken cancellationToken,
         TimeSpan? initialDelay = null)
     {
-        // Check that the queue exists only once
-        if (!hasCheckedQueueExists)
-        {
-            hasCheckedQueueExists = true;
-            queueExists = await AzureServiceBusQueueManager.TryCreateQueueIfMissingAsync(connectionString, queueName, cancellationToken);
-        }
-
-        // If the queue doesn't exist, we can't send a message to it
-        if (!queueExists)
-        {
-            throw new TransmissionFailureException($"Azure Service Bus Sender for {typeof(TMessage).GetType().Name} cannot send messages to queue {queueName} because " +
-                $"it doesn't exist and the application doesn't have permission to create it.");
-        }
-
         // Wrap the user payload in a retry wrapper, serialize to a string, and then encode for transmission to service bus
         var body = Encoding.UTF8.GetBytes(
             JsonConvert.SerializeObject(
                 new AzureServiceBusMessage<TMessage>()
                 {
                     Payload = message,
-                    RetryDelays = retryOptions.AllowRetries ? retrySpans : []
+                    RetryDelays = messageRetryOptions.AllowRetries ? messageRetryDelays : []
                 }));
 
         var busMessage = new ServiceBusMessage(body);
@@ -88,14 +67,7 @@ internal class AzureServiceBusQueueSender<TMessage>
         if (initialDelay.HasValue)
             busMessage.ScheduledEnqueueTime = DateTime.UtcNow + initialDelay.Value;
 
-        trackingService?.RecordSentMessage(queueName, message);
+        queueTrackingService?.RecordSentMessage(queueName, message);
         await serviceBusSender.SendMessageAsync(busMessage, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        await serviceBusSender.DisposeAsync().ConfigureAwait(false);
-        await serviceBusClient.DisposeAsync().ConfigureAwait(false);
     }
 }
