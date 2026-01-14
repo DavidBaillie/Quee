@@ -13,12 +13,10 @@ internal static class AzureServiceBusQueueManager
     /// <param name="queueName">Name of the queue to look for</param>
     /// <param name="cancellationToken">Process token</param>
     /// <returns>If the queue exists when the method returns</returns>
-    public static async Task<bool> TryCreateQueueIfMissingAsync(string connectionString, string queueName, CancellationToken cancellationToken)
+    public static async Task<bool> TryCreateQueueIfMissingAsync(ServiceBusAdministrationClient client, string queueName, CancellationToken cancellationToken)
     {
         try
         {
-            var client = new ServiceBusAdministrationClient(connectionString);
-
             if (!await client.QueueExistsAsync(queueName, cancellationToken))
             {
                 await client.CreateQueueAsync(queueName, cancellationToken);

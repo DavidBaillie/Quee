@@ -1,8 +1,10 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Azure.Messaging.ServiceBus.Administration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Quee.AzureServiceBus.Interfaces;
 using Quee.AzureServiceBus.Models;
 using System.Text;
 
@@ -12,7 +14,6 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     : IHostedService, IAsyncDisposable
     where TMessage : class
 {
-    private readonly string connectionString;
     private readonly string queueName;
     private readonly ConsumerOptions options;
     private readonly ILogger<AzureServiceBusQueueConsumer<TMessage>> logger;
@@ -20,6 +21,7 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     private readonly IQueueEventTrackingService? trackingService;
 
     private readonly ServiceBusClient serviceBusClient;
+    private readonly ServiceBusAdministrationClient? administrationClient;
     private readonly ServiceBusProcessor serviceBusProcessor;
     private readonly ServiceBusSender serviceBusSender;
 
@@ -31,11 +33,9 @@ internal class AzureServiceBusQueueConsumer<TMessage>
     /// <param name="connectionString">Connection string for the Azure Service Bus</param>
     /// <param name="queueName">Queue to work with in the service bus</param>
     public AzureServiceBusQueueConsumer(
-        string connectionString,
         string queueName,
         IServiceProvider serviceProvider)
     {
-        this.connectionString = connectionString;
         this.queueName = queueName;
 
         logger = serviceProvider.GetRequiredService<ILogger<AzureServiceBusQueueConsumer<TMessage>>>();
@@ -48,16 +48,9 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             );
 
         // Build the client for connecting to the service bus
-        serviceBusClient = new ServiceBusClient(connectionString, new ServiceBusClientOptions()
-        {
-            RetryOptions = new()
-            {
-                Delay = TimeSpan.FromSeconds(1),
-                Mode = ServiceBusRetryMode.Exponential,
-                MaxDelay = TimeSpan.FromSeconds(30),
-                MaxRetries = 5
-            }
-        });
+        serviceBusClient = serviceProvider.GetRequiredService<ServiceBusClient>();
+        administrationClient = serviceProvider.GetService<ServiceBusAdministrationClient>();
+        serviceBusSender = serviceProvider.GetRequiredService<IAzureServiceBusQueueSenderManager>().CreateSender(queueName);
 
         // Build the processor with settings for controlling how the processing works
         serviceBusProcessor = serviceBusClient.CreateProcessor(queueName, new ServiceBusProcessorOptions()
@@ -65,7 +58,6 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             MaxConcurrentCalls = options.ConcurrencyLimit,
             PrefetchCount = options.PrefetchLimit
         });
-        serviceBusSender = serviceBusClient.CreateSender(queueName);
     }
 
     /// <inheritdoc />
@@ -80,7 +72,8 @@ internal class AzureServiceBusQueueConsumer<TMessage>
             cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
             // If the queue needs to be checked and the queue doesn't exist (we can't create it when missing), log the message and kill the startup
-            if (!await AzureServiceBusQueueManager.TryCreateQueueIfMissingAsync(connectionString, queueName, cancellationToken))
+            if (administrationClient is not null &&
+                !await AzureServiceBusQueueManager.TryCreateQueueIfMissingAsync(administrationClient, queueName, cancellationToken))
             {
                 logger.LogError("Azure Service Bus Consumer for {QueueName} has failed to start because the queue does not exist and cannot be created.",
                     queueName);
