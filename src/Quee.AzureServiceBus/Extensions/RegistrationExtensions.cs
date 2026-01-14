@@ -16,7 +16,7 @@ public static class RegistrationExtensions
     public static IServiceCollection QueeWithAzureServiceBus(
         this IServiceCollection services,
         string connectionString,
-        bool allowQueueManagement,
+        bool allowQueueManagement = false,
         Action<IAzureServiceBusQueueConfigurator>? configuration = null)
     {
         IAzureServiceBusQueueConfigurator configurator = new AzureServiceBusQueueConfigurator(services, connectionString, allowQueueManagement);

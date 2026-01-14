@@ -44,7 +44,7 @@ internal sealed class AzureServiceBusQueueConfigurator
         // Register the queue sender manager as a shared resource that allows a single sender to be shared across multiple threads
         services.TryAddSingleton<IAzureServiceBusQueueSenderManager, AzureServiceBusQueueSenderManager>();
 
-        // If the runtime is allow to manage queues, enable the admin client for use
+        // If the runtime is allowed to manage queues, enable the admin client for use
         if (allowAdminManagement)
             services.TryAddSingleton(new ServiceBusAdministrationClient(connectionString));
     }
