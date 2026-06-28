@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Quee.AzureServiceBus/Quee.AzureServiceBus.csproj" />
+  <Project Path="src/Quee.WebApp/Quee.WebApp.csproj" />
+  <Project Path="src/Quee/Quee.csproj" />
+  <Project Path="test/Quee.Tests/Quee.Tests.csproj" />
+</Solution>
