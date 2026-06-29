@@ -13,12 +13,9 @@ on:
 
 jobs:
   test-quee:
-    name: Test Quee In-Memory (${{ matrix.dotnet-version }})
-    strategy:
-      matrix:
-        dotnet-version: &dotnet-versions ['10.0.x']
+    name: Test Quee In-Memory
     uses: ./.github/workflows/build-and-test.yml
     with:
       CONFIGURATION: Release
-      DOTNET_VERSION: ${{ matrix.dotnet-version }}
+      DOTNET_VERSION: 10.0.x
       PROJECT_PATH: './test/Quee.Memory.Tests/Quee.Memory.Tests.csproj'
