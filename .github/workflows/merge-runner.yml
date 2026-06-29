@@ -1,0 +1,24 @@
+name: Merge Runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - master
+  pull_request:
+    branches:
+      - master
+
+
+jobs:
+  test-quee:
+    name: Test Quee In-Memory (${{ matrix.dotnet-version }})
+    strategy:
+      matrix:
+        dotnet-version: &dotnet-versions ['6.0.x', '7.0.x', '8.0.x', '9.0.x', '10.0.x']
+    uses: ./.github/workflows/run-test-suite.yml
+    with:
+      CONFIGURATION: Release
+      DOTNET_VERSION: ${{ matrix.dotnet-version }}
+      PROJECT_PATH: './test/Quee.Memory.Tests/Quee.Memory.Tests.csproj'
