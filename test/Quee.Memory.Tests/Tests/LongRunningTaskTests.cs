@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.WebApp.Queues.Commands;
 
-namespace Quee.Tests.Integration.Tests;
+namespace Quee.Memory.Tests.Tests;
 
 
 internal class LongRunningTaskTests : IntegrationTestBase

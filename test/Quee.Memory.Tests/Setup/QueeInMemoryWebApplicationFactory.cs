@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Quee.WebApp.Queues.Commands;
 using Quee.WebApp.Queues.Consumers;
 
-namespace Quee.Tests.Integration.Setup;
+namespace Quee.Memory.Tests.Setup;
 
-internal class QueeWebApplicationFactory : WebApplicationFactory<WebApp.Program>
+internal class QueeInMemoryWebApplicationFactory : WebApplicationFactory<WebApp.Program>
 {
     /// <inheritdoc />
     protected override void ConfigureWebHost(IWebHostBuilder builder)

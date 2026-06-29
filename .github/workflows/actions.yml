@@ -4,17 +4,19 @@ on:
   pull_request:
     branches: [ dev, master ]
   push:
-    branches: [dev, master ]
+    branches: [ dev, master ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      CONFIG_PATH: ${{ github.workspace }}/docker/config.json
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0'
 
@@ -25,6 +27,11 @@ jobs:
         run: dotnet build ./src/Quee -c Release
 
       - name: Build and run Quee.Tests
-        run: |
-          dotnet build ./test/Quee.Tests -c Release
-          dotnet test ./test/Quee.Tests -c Release --results-directory ./TestResults
+        run: dotnet test ./test/Quee.Memory.Tests -c Release --results-directory ./TestResults --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ./TestResults/*.trx

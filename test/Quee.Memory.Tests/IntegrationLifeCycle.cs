@@ -1,10 +1,10 @@
-﻿namespace Quee.Tests.Integration;
+﻿namespace Quee.Memory.Tests;
 
 /// <summary>
 /// Sets up and tears down all tests under the integration test folder
 /// </summary>
 [SetUpFixture]
-internal class IntegrationLifeCycle
+internal class MemoryIntegrationLifeCycle
 {
     /// <summary>
     /// Handles setting up the test environment before tests run
@@ -12,7 +12,7 @@ internal class IntegrationLifeCycle
     [OneTimeSetUp]
     public async Task SetupAsync()
     {
-        await Task.CompletedTask;
+
     }
 
     /// <summary>
@@ -21,6 +21,6 @@ internal class IntegrationLifeCycle
     [OneTimeTearDown]
     public async Task TearDownAsync()
     {
-        await Task.CompletedTask;
+
     }
 }

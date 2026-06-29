@@ -7,7 +7,7 @@ public class SimpleMessageConsumer(ILogger<SimpleMessageConsumer> logger)
 {
     public Task ConsumeAsync(Message<SimpleMessageCommand> message, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Received message {Message}", message.Payload.Message);
+        // logger.LogInformation("Received message {Message}", message.Payload.Message);
         return Task.CompletedTask;
     }
 

@@ -1,18 +1,18 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Quee.Tests.Integration.Setup;
+using Quee.ServiceBus.Tests.Setup;
 
-namespace Quee.Tests.Integration;
+namespace Quee.ServiceBus.Tests;
 
 /// <summary>
 /// Base class for all integration tests to centralize logic. Enables parallelizable processing by default. 
 /// </summary>
 [Parallelizable(ParallelScope.All), TestFixture, Category("Integration")]
-internal abstract class IntegrationTestBase
+internal abstract class ServiceBusIntegrationTestBase
 {
     /// <summary>
     /// Web Application factory to simulate API
     /// </summary>
-    protected readonly QueeWebApplicationFactory WebApplicationFactory = new();
+    protected readonly QueeServiceBusWebApplicationFactory WebApplicationFactory = new();
 
     /// <summary>
     /// Creates a disposable <see cref="HttpClient"/> to make calls to the API with

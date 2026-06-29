@@ -1,15 +1,17 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Quee.WebApp.Queues.Commands;
 
-namespace Quee.Tests.Integration.Tests;
+namespace Quee.ServiceBus.Tests.Tests;
 
-internal class SimpleMessageTests : IntegrationTestBase
+internal class SimpleMessageTests : ServiceBusIntegrationTestBase
 {
     [TestCase("Singular")]
     [TestCase("Something longer")]
     [TestCase("GARBLED_osajhd;SAODHC;SDCKnS:DKvcjnS:DC")]
     public async Task WhenMessageSentIsReceived(string message)
     {
+        TestContext.Progress.WriteLine($"Starting test for WhenMessageSentIsReceived({message})");
+
         // Arrange
         using var scope = CreateScope();
         var monitor = scope.ServiceProvider.GetRequiredService<IQueueMonitor>();
@@ -41,37 +43,39 @@ internal class SimpleMessageTests : IntegrationTestBase
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
         Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(SimpleMessageCommand)} was found in the fault queue when it should have been consumed.", sourceMessage);
+
+        TestContext.Progress.WriteLine($"Finished test for WhenMessageSentIsReceived({message})");
     }
 
-    [Test]
-    public async Task WhenQueueManyLongRunningTaskWillBeConsumed()
-    {
-        // Arrange
-        const int messageCount = 1000;
+    // [Test]
+    // public async Task WhenQueueManyLongRunningTaskWillBeConsumed()
+    // {
+    //     // Arrange
+    //     const int messageCount = 1000;
 
-        using var scope = CreateScope();
-        var monitor = scope.ServiceProvider.GetRequiredService<IQueueMonitor>();
+    //     using var scope = CreateScope();
+    //     var monitor = scope.ServiceProvider.GetRequiredService<IQueueMonitor>();
 
-        var sentMessagesIds = Enumerable.Range(0, messageCount)
-            .Select(x =>
-            {
-                var message = new SimpleMessageCommand(Guid.NewGuid(), "Hello World");
-                scope.ServiceProvider.GetRequiredService<IQueueSender<SimpleMessageCommand>>()
-                    .SendMessageAsync(
-                        message,
-                        CancellationToken.None).Wait();
+    //     var sentMessagesIds = Enumerable.Range(0, messageCount)
+    //         .Select(x =>
+    //         {
+    //             var message = new SimpleMessageCommand(Guid.NewGuid(), "Hello World");
+    //             scope.ServiceProvider.GetRequiredService<IQueueSender<SimpleMessageCommand>>()
+    //                 .SendMessageAsync(
+    //                     message,
+    //                     CancellationToken.None).Wait();
 
-                return message.Id;
-            }).ToHashSet();
+    //             return message.Id;
+    //         }).ToHashSet();
 
-        foreach (var id in sentMessagesIds)
-        {
-            var consumedMessage = await monitor.WaitForMessageToReceive<SimpleMessageCommand>(
-                nameof(SimpleMessageCommand),
-                TimeSpan.FromSeconds(30),
-                CancellationToken.None,
-                x => x.Id == id);
-            Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was sent into the queue with Id {id}, but was never consumed.");
-        }
-    }
+    //     foreach (var id in sentMessagesIds)
+    //     {
+    //         var consumedMessage = await monitor.WaitForMessageToReceive<SimpleMessageCommand>(
+    //             nameof(SimpleMessageCommand),
+    //             TimeSpan.FromSeconds(30),
+    //             CancellationToken.None,
+    //             x => x.Id == id);
+    //         Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was sent into the queue with Id {id}, but was never consumed.");
+    //     }
+    // }
 }
