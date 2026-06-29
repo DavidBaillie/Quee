@@ -31,5 +31,9 @@ jobs:
         with:
           dotnet-version: ${{ inputs.DOTNET_VERSION }}
 
+      - name: Resolve Target Framework
+        id: framework
+        run: echo "TFM=net$(echo '${{ inputs.DOTNET_VERSION }}' | grep -oP '^\d+\.\d+')" >> $GITHUB_OUTPUT
+
       - name: Run Test Suite
-        run: dotnet test ${{ inputs.PROJECT_PATH }} --configuration ${{ inputs.CONFIGURATION }}
+        run: dotnet test ${{ inputs.PROJECT_PATH }} --configuration ${{ inputs.CONFIGURATION }} --framework ${{ steps.framework.outputs.TFM }}
