@@ -13,9 +13,17 @@ on:
 
 jobs:
   test-quee:
-    name: Test Quee In-Memory
-    uses: ./.github/workflows/build-and-test.yml
-    with:
-      CONFIGURATION: Release
-      DOTNET_VERSION: 10.0.x
-      PROJECT_PATH: './test/Quee.Memory.Tests/Quee.Memory.Tests.csproj'
+    name: Build and Test Quee
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Using .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Run Test Suite
+        run: dotnet test test/Quee.Memory.Tests/Quee.Memory.Tests.csproj --configuration Release
