@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         dotnet-version: &dotnet-versions ['6.0.x', '7.0.x', '8.0.x', '9.0.x', '10.0.x']
-    uses: ./.github/workflows/run-test-suite.yml
+    uses: ./.github/workflows/build-and-test.yml
     with:
       CONFIGURATION: Release
       DOTNET_VERSION: ${{ matrix.dotnet-version }}
