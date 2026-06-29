@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Logging;
 using Quee.WebApp.Queues.Commands;
 using Quee.WebApp.Queues.Consumers;
 
@@ -12,6 +13,7 @@ internal class QueeInMemoryWebApplicationFactory : WebApplicationFactory<WebApp.
     {
         base.ConfigureWebHost(builder);
 
+        builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureServices(services =>
         {
             // Setup some queues to process
