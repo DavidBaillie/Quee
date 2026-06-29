@@ -16,7 +16,7 @@ public class LongRunningTaskConsumer(ILogger<LongRunningTaskConsumer> logger)
     public async Task ConsumeAsync(Message<LongRunningTaskCommand> message, CancellationToken cancellationToken)
     {
         await Task.Delay(message.Payload.MilisecondsToWait, cancellationToken);
-        // logger.LogInformation("Completed long running task");
+        logger.LogInformation("Completed long running task");
     }
 
     /// <summary>
