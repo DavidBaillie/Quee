@@ -26,21 +26,21 @@ internal class SimpleMessageTests : IntegrationTestBase
             TimeSpan.FromSeconds(1),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(sentMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was requested to send into the Queue but no message was recorded as being sent.", sourceMessage);
+        Assert.That(sentMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was requested to send into the Queue but no message was recorded as being sent.");
 
         var consumedMessage = await monitor.WaitForMessageToReceive<SimpleMessageCommand>(
             nameof(SimpleMessageCommand),
             TimeSpan.FromSeconds(10),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was sent into the queue, but was never consumed.", sourceMessage);
+        Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(SimpleMessageCommand)} was sent into the queue, but was never consumed.");
 
         var faultMessage = await monitor.WaitForMessageToFault<SimpleMessageCommand>(
             nameof(SimpleMessageCommand),
             TimeSpan.FromMilliseconds(100),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(SimpleMessageCommand)} was found in the fault queue when it should have been consumed.", sourceMessage);
+        Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(SimpleMessageCommand)} was found in the fault queue when it should have been consumed.");
     }
 
     [Test]

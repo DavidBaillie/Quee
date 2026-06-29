@@ -24,21 +24,21 @@ internal class LongRunningTaskTests : IntegrationTestBase
             TimeSpan.FromSeconds(1),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(sentMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was requested to send into the Queue but no message was recorded as being sent.", sourceMessage);
+        Assert.That(sentMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was requested to send into the Queue but no message was recorded as being sent.");
 
         var consumedMessage = await monitor.WaitForMessageToReceive<LongRunningTaskCommand>(
             nameof(LongRunningTaskCommand),
             TimeSpan.FromSeconds(10),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was sent into the queue, but was never consumed.", sourceMessage);
+        Assert.That(consumedMessage, Is.Not.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was sent into the queue, but was never consumed.");
 
         var faultMessage = await monitor.WaitForMessageToFault<LongRunningTaskCommand>(
             nameof(LongRunningTaskCommand),
             TimeSpan.FromMilliseconds(100),
             CancellationToken.None,
             x => x.Id == sourceMessage.Id);
-        Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was found in the fault queue when it should have been consumed.", sourceMessage);
+        Assert.That(faultMessage, Is.EqualTo(null), $"{nameof(LongRunningTaskCommand)} was found in the fault queue when it should have been consumed.");
     }
 
     [Test]
